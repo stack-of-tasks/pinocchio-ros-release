@@ -1,0 +1,50 @@
+# 
+# Copyright (c) 2015-2019 CNRS INRIA
+# Copyright (c) 2015 Wandercraft, 86 rue de Paris 91400 Orsay, France.
+# 
+
+# ----------------------------------------------------
+# --- C++ --------------------------------------------
+# ----------------------------------------------------
+
+IF(LUA5_FOUND)
+  LIST(APPEND ${PROJECT_NAME}_PARSERS_SOURCES 
+      parsers/lua/lua_tables.cpp
+      parsers/lua.cpp
+    )
+ENDIF(LUA5_FOUND)
+
+SET(${PROJECT_NAME}_SOURCES
+  ${${PROJECT_NAME}_PARSERS_SOURCES}
+)
+
+IF(UNIX)
+    # Create target libpinocchio.so
+    ADD_LIBRARY(${PROJECT_NAME} SHARED ${HEADERS} ${${PROJECT_NAME}_SOURCES})
+    SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+    IF(BUILD_WITH_COMMIT_VERSION)
+      TAG_LIBRARY_VERSION(${PROJECT_NAME})
+    ENDIF(BUILD_WITH_COMMIT_VERSION)
+    PKG_CONFIG_USE_DEPENDENCY(${PROJECT_NAME} eigen3)
+    TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SERIALIZATION_LIBRARY})
+
+    IF(URDFDOM_FOUND)
+      PKG_CONFIG_USE_DEPENDENCY(${PROJECT_NAME} urdfdom)
+    ENDIF(URDFDOM_FOUND)
+
+    IF(HPP_FCL_FOUND)
+      PKG_CONFIG_USE_DEPENDENCY(${PROJECT_NAME} hpp-fcl)
+    ENDIF(HPP_FCL_FOUND)
+
+    IF(LUA5_FOUND)
+      PKG_CONFIG_USE_DEPENDENCY(${PROJECT_NAME} ${LUA5_PACKAGE})
+    ENDIF(LUA5_FOUND)
+
+    ADD_HEADER_GROUP(HEADERS)
+    ADD_SOURCE_GROUP(${PROJECT_NAME}_SOURCES)
+
+    INSTALL(TARGETS ${PROJECT_NAME} 
+            EXPORT ${TARGETS_EXPORT_NAME}
+            DESTINATION lib)
+ENDIF(UNIX)
+
