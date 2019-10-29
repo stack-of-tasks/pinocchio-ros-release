@@ -1,29 +1,56 @@
-# This config file for Travis CI utilizes ros-industrial/industrial_ci package.
-# For more info for the package, see https://github.com/ros-industrial/industrial_ci/blob/master/README.rst
-sudo: required 
-dist: xenial
-services:
-  - docker
-language: generic 
+language: generic
+python:
+  - "2.7"
+sudo: required
+git:
+  depth: false
 compiler:
   - gcc
 env:
   global:
-    - ROS_PARALLEL_JOBS="-j2"
-    - CATKIN_PARALLEL_JOBS="-p2"
-    - UPSTREAM_WORKSPACE=file
-  matrix:
-    - ROS_DISTRO="kinetic"
-    - ROS_DISTRO="kinetic"
-    - ROS_DISTRO="kinetic" PRERELEASE=true
-    - ROS_DISTRO="melodic"
-    - ROS_DISTRO="melodic"
-    - ROS_DISTRO="melodic" PRERELEASE=true
-matrix:
-  allow_failures:
-    - env: ROS_DISTRO="kinetic" PRERELEASE=true
-    - env: ROS_DISTRO="melodic" PRERELEASE=true
+    - secure: "SnIBG/xLIHX3CSvUbqqsX8xTVqIqQ7fFS6HWO6KZQVBsT6yugTwYHbyhNiU531JejYJ/I3ZrDhXfYH3qFZiYxnH1sifvwV+fnTtMXpPN7qPZwIymkjcmm6gJF51e0C7VOfUbvKFv0ngwj+ul21rgZSMuoEvxPK0WxtE3/ZSfn9c="
+    - APT_DEPENDENCIES="doxygen libeigen3-dev "
+    - DEBSIGN_KEYID=5AE5CD75
+    - LCOV_IGNORE_RULES="*unittest* /opt/openrobots/*"
+    - DO_COVERAGE_ON_BRANCH="master;release"
+    - DO_CPPCHECK_ON_BRANCH=""
+    - DO_INSTALL_DOC_EXCEPT_ON_BRANCH=""
+    - BUILDTYPE=MinSizeRel
+    - BUILD_WITH_CATKIN_SUPPORT=false
+
+notifications:
+email:
+  - pinocchio-dev@laas.fr
+branches:
+  only:
+    - master
+    - debian
+    - devel
+
+jobs:
+  include:
+    - dist: bionic
+      env: BUILD_WITH_COLLISION_SUPPORT=OFF
+    - dist: trusty 
+      env: BUILD_WITH_COLLISION_SUPPORT=ON
+    - dist: xenial
+      env: BUILD_WITH_COLLISION_SUPPORT=ON
+    - dist: bionic
+      env: BUILD_WITH_COLLISION_SUPPORT=ON
+
+allow_failures:
+  - compiler:
+before_install: ./travis_custom/custom_before_install
 install:
-  - git clone https://github.com/ros-industrial/industrial_ci.git .ci_config
+  - pip install --user pyopenssl
+  - pip install --user numpy
 script:
-  - source .ci_config/travis.sh
+  - export CMAKE_ADDITIONAL_OPTIONS="-DCMAKE_BUILD_TYPE=${BUILDTYPE} -DBUILD_WITH_COLLISION_SUPPORT=${BUILD_WITH_COLLISION_SUPPORT}"
+  - sudo free -m -t
+  - travis_wait 60 ./.travis/run ../travis_custom/custom_build
+after_failure: ./.travis/run after_failure
+after_success:
+  - ./.travis/run after_success
+  #- export PYTHONPATH=$install_dir/lib/python2.7/site-packages
+  #- coveralls-lcov -v -n $build_dir/coverage.info > coverage.json
+  - export PYTHONPATH=$PYHTONPATH:/tmp/_ci/install/lib/python2.7/site-packages:/usr/lib/python2.7/dist-packages
