@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2018 CNRS
+// Copyright (c) 2016-2019 CNRS INRIA
 //
 
 #ifndef __pinocchio_lie_group_operation_base_hpp__
@@ -62,7 +62,7 @@ PINOCCHIO_LIE_GROUP_PUBLIC_INTERFACE_GENERIC(Derived,typename)
     template <class ConfigIn_t, class Tangent_t, class ConfigOut_t>
     void integrate(const Eigen::MatrixBase<ConfigIn_t> & q,
                    const Eigen::MatrixBase<Tangent_t>  & v,
-                   const Eigen::MatrixBase<ConfigOut_t>& qout) const;
+                   const Eigen::MatrixBase<ConfigOut_t> & qout) const;
     
     /**
      * @brief      Computes the Jacobian of the integrate operator around zero.
@@ -95,10 +95,10 @@ PINOCCHIO_LIE_GROUP_PUBLIC_INTERFACE_GENERIC(Derived,typename)
     template <ArgumentPosition arg, class Config_t, class Tangent_t, class JacobianOut_t>
     void dIntegrate(const Eigen::MatrixBase<Config_t >  & q,
                     const Eigen::MatrixBase<Tangent_t>  & v,
-                    const Eigen::MatrixBase<JacobianOut_t>& J) const
+                    const Eigen::MatrixBase<JacobianOut_t> & J) const
     {
       PINOCCHIO_STATIC_ASSERT(arg==ARG0||arg==ARG1, arg_SHOULD_BE_ARG0_OR_ARG1);
-      return dIntegrate(q,v,J,arg);
+      return dIntegrate(q.derived(),v.derived(),PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J),arg);
     }
     
     /**
@@ -133,7 +133,7 @@ PINOCCHIO_LIE_GROUP_PUBLIC_INTERFACE_GENERIC(Derived,typename)
     template <class Config_t, class Tangent_t, class JacobianOut_t>
     void dIntegrate_dq(const Eigen::MatrixBase<Config_t >  & q,
                        const Eigen::MatrixBase<Tangent_t>  & v,
-                       const Eigen::MatrixBase<JacobianOut_t>& J) const;
+                       const Eigen::MatrixBase<JacobianOut_t> & J) const;
 
     /**
      * @brief      Computes the Jacobian of a small variation of the tangent vector into tangent space at identity.
@@ -149,7 +149,7 @@ PINOCCHIO_LIE_GROUP_PUBLIC_INTERFACE_GENERIC(Derived,typename)
     template <class Config_t, class Tangent_t, class JacobianOut_t>
     void dIntegrate_dv(const Eigen::MatrixBase<Config_t >  & q,
                        const Eigen::MatrixBase<Tangent_t>  & v,
-                       const Eigen::MatrixBase<JacobianOut_t>& J) const;
+                       const Eigen::MatrixBase<JacobianOut_t> & J) const;
 
     /**
      * @brief      Interpolation between two joint's configurations
@@ -164,7 +164,7 @@ PINOCCHIO_LIE_GROUP_PUBLIC_INTERFACE_GENERIC(Derived,typename)
     void interpolate(const Eigen::MatrixBase<ConfigL_t> & q0,
                      const Eigen::MatrixBase<ConfigR_t> & q1,
                      const Scalar& u,
-                     const Eigen::MatrixBase<ConfigOut_t>& qout) const;
+                     const Eigen::MatrixBase<ConfigOut_t> & qout) const;
     
     /**
      * @brief      Normalize the joint configuration given as input.
@@ -173,7 +173,7 @@ PINOCCHIO_LIE_GROUP_PUBLIC_INTERFACE_GENERIC(Derived,typename)
      * @param[out]     qout  the normalized joint configuration.
      */
     template <class Config_t>
-    void normalize (const Eigen::MatrixBase<Config_t>& qout) const;
+    void normalize(const Eigen::MatrixBase<Config_t> & qout) const;
 
     /**
      * @brief      Generate a random joint configuration, normalizing quaternions when necessary.
@@ -184,7 +184,7 @@ PINOCCHIO_LIE_GROUP_PUBLIC_INTERFACE_GENERIC(Derived,typename)
      * @param[out] qout  the random joint configuration.
      */
     template <class Config_t>
-    void random (const Eigen::MatrixBase<Config_t>& qout) const;
+    void random(const Eigen::MatrixBase<Config_t> & qout) const;
 
     /**
      * @brief      Generate a configuration vector uniformly sampled among
@@ -196,10 +196,9 @@ PINOCCHIO_LIE_GROUP_PUBLIC_INTERFACE_GENERIC(Derived,typename)
      * @param[out] qout             the random joint configuration in the two bounds.
      */
     template <class ConfigL_t, class ConfigR_t, class ConfigOut_t>
-    void randomConfiguration
-    (const Eigen::MatrixBase<ConfigL_t> & lower_pos_limit,
-     const Eigen::MatrixBase<ConfigR_t> & upper_pos_limit,
-     const Eigen::MatrixBase<ConfigOut_t> & qout) const;
+    void randomConfiguration(const Eigen::MatrixBase<ConfigL_t> & lower_pos_limit,
+                             const Eigen::MatrixBase<ConfigR_t> & upper_pos_limit,
+                             const Eigen::MatrixBase<ConfigOut_t> & qout) const;
 
     /**
      * @brief      Computes the tangent vector that must be integrated during one unit time to go from q0 to q1.
@@ -208,33 +207,59 @@ PINOCCHIO_LIE_GROUP_PUBLIC_INTERFACE_GENERIC(Derived,typename)
      * @param[in]  q1    the terminal configuration vector.
      *
      * @param[out] v     the corresponding velocity.
+     *
+     * \cheatsheet \f$ q_1 \ominus q_0 = - \left( q_0 \ominus q_1 \right) \f$
      */
     template <class ConfigL_t, class ConfigR_t, class Tangent_t>
     void difference(const Eigen::MatrixBase<ConfigL_t> & q0,
                     const Eigen::MatrixBase<ConfigR_t> & q1,
-                    const Eigen::MatrixBase<Tangent_t>& v) const;
-
-    template <class ConfigL_t, class ConfigR_t, class JacobianLOut_t, class JacobianROut_t>
-    void Jdifference(const Eigen::MatrixBase<ConfigL_t> & q0,
-                     const Eigen::MatrixBase<ConfigR_t> & q1,
-                     const Eigen::MatrixBase<JacobianLOut_t>& J0,
-                     const Eigen::MatrixBase<JacobianROut_t>& J1) const
-    PINOCCHIO_DEPRECATED;
+                    const Eigen::MatrixBase<Tangent_t> & v) const;
 
     /**
+     *
      * @brief      Computes the Jacobian of the difference operation with respect to q0 or q1.
+     *
+     * @tparam     arg   ARG0 (resp. ARG1) to get the Jacobian with respect to q0 (resp. q1).
      *
      * @param[in]  q0    the initial configuration vector.
      * @param[in]  q1    the terminal configuration vector.
-     * @tparam     arg   ARG0 (resp. ARG1) to get the Jacobian with respect to q0 (resp. q1).
      *
      * @param[out] J     the Jacobian of the difference operation.
+     *
+     * \warning because \f$ q_1 \ominus q_0 = - \left( q_0 \ominus q_1 \right) \f$,
+     * you may be tempted to write
+     * \f$ \frac{\partial\ominus}{\partial q_1} = - \frac{\partial\ominus}{\partial q_0} \f$.
+     * This is **false** in the general case because
+     * \f$ \frac{\partial\ominus}{\partial q_i} \f$ expects an input velocity relative to frame i.
+     * See SpecialEuclideanOperationTpl<3,_Scalar,_Options>::dDifference_impl.
+     *
+     * \cheatsheet \f$ \frac{\partial\ominus}{\partial q_1} \frac{\partial\oplus}{\partial v} = I \f$
      */
     template <ArgumentPosition arg, class ConfigL_t, class ConfigR_t, class JacobianOut_t>
     void dDifference(const Eigen::MatrixBase<ConfigL_t> & q0,
                      const Eigen::MatrixBase<ConfigR_t> & q1,
-                     const Eigen::MatrixBase<JacobianOut_t>& J) const;
+                     const Eigen::MatrixBase<JacobianOut_t> & J) const;
+//    {
+//      PINOCCHIO_STATIC_ASSERT(arg==ARG0||arg==ARG1, arg_SHOULD_BE_ARG0_OR_ARG1);
+//      return dDifference(q0.derived(),q1.derived(),PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J),arg);
+//    }
 
+    /**
+     *
+     * @brief      Computes the Jacobian of the difference operation with respect to q0 or q1.
+     *
+     * @param[in]  q0    the initial configuration vector.
+     * @param[in]  q1    the terminal configuration vector.
+     * @param[in]  arg   ARG0 (resp. ARG1) to get the Jacobian with respect to q0 (resp. q1).
+     *
+     * @param[out] J     the Jacobian of the difference operation.
+     *
+     */
+    template<class ConfigL_t, class ConfigR_t, class JacobianOut_t>
+    void dDifference(const Eigen::MatrixBase<ConfigL_t> & q0,
+                     const Eigen::MatrixBase<ConfigR_t> & q1,
+                     const Eigen::MatrixBase<JacobianOut_t> & J,
+                     const ArgumentPosition arg) const;
     /**
      * @brief      Squared distance between two joint configurations.
      *
@@ -264,6 +289,8 @@ PINOCCHIO_LIE_GROUP_PUBLIC_INTERFACE_GENERIC(Derived,typename)
      *
      * @param[in]  q0    Configuration 0
      * @param[in]  q1    Configuration 1
+     *
+     * \cheatsheet \f$ q_1 \equiv  q_0 \oplus \left( q_1 \ominus q_0 \right) \f$ (\f$\equiv\f$ means equivalent, not equal).
      */
     template <class ConfigL_t, class ConfigR_t>
     bool isSameConfiguration(const Eigen::MatrixBase<ConfigL_t> & q0,
@@ -303,7 +330,7 @@ PINOCCHIO_LIE_GROUP_PUBLIC_INTERFACE_GENERIC(Derived,typename)
     void interpolate_impl(const Eigen::MatrixBase<ConfigL_t> & q0,
                           const Eigen::MatrixBase<ConfigR_t> & q1,
                           const Scalar& u,
-                          const Eigen::MatrixBase<ConfigOut_t>& qout) const;
+                          const Eigen::MatrixBase<ConfigOut_t> & qout) const;
     
     template <class Config_t>
     void normalize_impl(const Eigen::MatrixBase<Config_t> & qout) const;

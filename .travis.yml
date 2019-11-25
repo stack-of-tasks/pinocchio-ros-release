@@ -1,11 +1,11 @@
 language: generic
-python:
-  - "2.7"
 sudo: required
 git:
   depth: false
 compiler:
   - gcc
+cache:
+  ccache: true
 env:
   global:
     - secure: "SnIBG/xLIHX3CSvUbqqsX8xTVqIqQ7fFS6HWO6KZQVBsT6yugTwYHbyhNiU531JejYJ/I3ZrDhXfYH3qFZiYxnH1sifvwV+fnTtMXpPN7qPZwIymkjcmm6gJF51e0C7VOfUbvKFv0ngwj+ul21rgZSMuoEvxPK0WxtE3/ZSfn9c="
@@ -15,8 +15,9 @@ env:
     - DO_COVERAGE_ON_BRANCH="master;release"
     - DO_CPPCHECK_ON_BRANCH=""
     - DO_INSTALL_DOC_EXCEPT_ON_BRANCH=""
-    - BUILDTYPE=MinSizeRel
+    - BUILDTYPE=Release
     - BUILD_WITH_CATKIN_SUPPORT=false
+    - CTEST_OUTPUT_ON_FAILURE=1
 
 notifications:
 email:
@@ -29,14 +30,18 @@ branches:
 
 jobs:
   include:
-    - dist: bionic
+    - dist: xenial
       env: BUILD_WITH_COLLISION_SUPPORT=OFF
+      python: "2.7"
     - dist: trusty 
       env: BUILD_WITH_COLLISION_SUPPORT=ON
+      python: "2.7"
     - dist: xenial
       env: BUILD_WITH_COLLISION_SUPPORT=ON
-    - dist: bionic
+      python: "2.7"
+    - dist: xenial
       env: BUILD_WITH_COLLISION_SUPPORT=ON
+      python: "3.5"
 
 allow_failures:
   - compiler:

@@ -1,3 +1,0 @@
-[submodule "romeo_description/cmake"]
-	path = romeo_description/cmake
-	url = git://github.com/jrl-umi3218/jrl-cmakemodules.git

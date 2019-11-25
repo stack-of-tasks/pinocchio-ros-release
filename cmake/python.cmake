@@ -43,6 +43,11 @@
 #
 #  Absolute path where Python files will be installed.
 
+#.rst:
+# .. variable:: PYTHON_EXT_SUFFIX
+#
+#  Portable suffix of C++ Python modules.
+
 IF(CMAKE_VERSION VERSION_LESS "3.2")
     SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/python ${CMAKE_MODULE_PATH})
     MESSAGE(WARNING "CMake versions older than 3.2 do not properly find Python. Custom macros are used to find it.")
@@ -56,9 +61,41 @@ IF (NOT ${PYTHONINTERP_FOUND} STREQUAL TRUE)
 ENDIF (NOT ${PYTHONINTERP_FOUND} STREQUAL TRUE)
 MESSAGE(STATUS "PythonInterp: ${PYTHON_EXECUTABLE}")
 
+# Set PYTHON_LIBRARY and PYTHON_INCLUDE_DIR variables if they are not defined by the user
+IF(DEFINED PYTHON_EXECUTABLE AND NOT WIN32)
+  # Retrieve the corresponding value of PYTHON_LIBRARY if it is not defined
+  IF(NOT DEFINED PYTHON_LIBRARY)
+    EXECUTE_PROCESS(
+      COMMAND "${PYTHON_EXECUTABLE}" "-c"
+      "import distutils.sysconfig as sysconfig; import os; print(os.path.join(sysconfig.get_config_var('LIBDIR'),sysconfig.get_config_var('LIBRARY')))"
+      OUTPUT_VARIABLE PYTHON_LIBRARY_HINT
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET)
+    # Remove extension if needed (it may be a static extension)
+    string(REGEX REPLACE "\\.[^.]*$" "" PYTHON_LIBRARY_HINT ${PYTHON_LIBRARY_HINT})
+    # Add correct extension
+    IF(APPLE)
+      SET(PYTHON_LIBRARY_HINT "${PYTHON_LIBRARY_HINT}.dylib")
+    ELSE()
+      SET(PYTHON_LIBRARY_HINT "${PYTHON_LIBRARY_HINT}.so")
+    ENDIF()
+  ENDIF(NOT DEFINED PYTHON_LIBRARY)
+  # Retrieve the corresponding value of PYTHON_INCLUDE_DIR if it is not defined
+  IF(NOT DEFINED PYTHON_INCLUDE_DIR)
+    EXECUTE_PROCESS(
+      COMMAND "${PYTHON_EXECUTABLE}" "-c"
+      "import distutils.sysconfig as sysconfig; print(sysconfig.get_python_inc())"
+      OUTPUT_VARIABLE PYTHON_INCLUDE_DIR
+      ERROR_QUIET)
+    STRING(STRIP "${PYTHON_INCLUDE_DIR}" PYTHON_INCLUDE_DIR)
+  ENDIF(NOT DEFINED PYTHON_INCLUDE_DIR)
+ENDIF(DEFINED PYTHON_EXECUTABLE AND NOT WIN32)
+
 # Inform PythonLibs of the required version of PythonInterp
 SET(PYTHONLIBS_VERSION_STRING ${PYTHON_VERSION_STRING})
+
 FIND_PACKAGE(PythonLibs ${ARGN})
+MESSAGE(STATUS "PythonLibrary hint: ${PYTHON_LIBRARY_HINT}") # TODO: Should be removed later
 MESSAGE(STATUS "PythonLibraries: ${PYTHON_LIBRARIES}")
 IF (NOT ${PYTHONLIBS_FOUND} STREQUAL TRUE)
    MESSAGE(FATAL_ERROR "Python has not been found.")
@@ -110,14 +147,33 @@ ENDIF(PYTHON_PACKAGES_DIR)
 MESSAGE(STATUS "Python site lib: ${PYTHON_SITELIB}")
 
 # Get PYTHON_SOABI
+# We should be in favor of using PYTHON_EXT_SUFFIX in future for better portability.
+# However we keep it here for backward compatibility.
 SET(PYTHON_SOABI "")
-IF(PYTHON_VERSION_MAJOR EQUAL 3)
+IF(PYTHON_VERSION_MAJOR EQUAL 3 AND NOT WIN32)
   EXECUTE_PROCESS(
     COMMAND "${PYTHON_EXECUTABLE}" "-c"
     "from distutils.sysconfig import get_config_var; print('.' + get_config_var('SOABI'))"
     OUTPUT_VARIABLE PYTHON_SOABI)
   STRING(STRIP ${PYTHON_SOABI} PYTHON_SOABI)
+ENDIF(PYTHON_VERSION_MAJOR EQUAL 3 AND NOT WIN32)
+
+# Get PYTHON_EXT_SUFFIX
+SET(PYTHON_EXT_SUFFIX "")
+IF(PYTHON_VERSION_MAJOR EQUAL 3)
+  EXECUTE_PROCESS(
+    COMMAND "${PYTHON_EXECUTABLE}" "-c"
+    "from distutils.sysconfig import get_config_var; print(get_config_var('EXT_SUFFIX'))"
+    OUTPUT_VARIABLE PYTHON_EXT_SUFFIX)
+  STRING(STRIP ${PYTHON_EXT_SUFFIX} PYTHON_EXT_SUFFIX)
 ENDIF(PYTHON_VERSION_MAJOR EQUAL 3)
+IF("${PYTHON_EXT_SUFFIX}" STREQUAL "")
+  IF(WIN32)
+    SET(PYTHON_EXT_SUFFIX ".pyd")
+  ELSE()
+    SET(PYTHON_EXT_SUFFIX ".so")
+  ENDIF()
+ENDIF()
 
 # Log Python variables
 LIST(APPEND LOGGING_WATCHED_VARIABLES
@@ -127,6 +183,7 @@ LIST(APPEND LOGGING_WATCHED_VARIABLES
   PYTHONLIBS_VERSION_STRING
   PYTHON_EXECUTABLE
   PYTHON_SOABI
+  PYTHON_EXT_SUFFIX
   )
 
 ENDMACRO(FINDPYTHON)

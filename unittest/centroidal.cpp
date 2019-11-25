@@ -1,16 +1,16 @@
 //
-// Copyright (c) 2015-2018 CNRS INRIA
+// Copyright (c) 2015-2019 CNRS INRIA
 //
 
-#include "pinocchio/multibody/model.hpp"
-#include "pinocchio/multibody/data.hpp"
 #include "pinocchio/algorithm/crba.hpp"
 #include "pinocchio/algorithm/centroidal.hpp"
 #include "pinocchio/algorithm/rnea.hpp"
 #include "pinocchio/algorithm/jacobian.hpp"
 #include "pinocchio/algorithm/center-of-mass.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
+
 #include "pinocchio/parsers/sample-models.hpp"
+
 #include "pinocchio/utils/timer.hpp"
 
 #include <iostream>
@@ -32,7 +32,7 @@ static void addJointAndBody(pinocchio::Model & model,
   
   Model::JointIndex idx;
   
-  if (setRandomLimits)
+  if(setRandomLimits)
     idx = model.addJoint(model.getJointId(parent_name),joint,
                          SE3::Random(),
                          name + "_joint",
@@ -41,15 +41,15 @@ static void addJointAndBody(pinocchio::Model & model,
                          CV::Random() - CV::Constant(1),
                          CV::Random() + CV::Constant(1)
                          );
-    else
-      idx = model.addJoint(model.getJointId(parent_name),joint,
-                           placement, name + "_joint");
-      
-      model.addJointFrame(idx);
-      
-      model.appendBodyToJoint(idx,Inertia::Random(),SE3::Identity());
-      model.addBodyFrame(name + "_body", idx);
-      }
+  else
+    idx = model.addJoint(model.getJointId(parent_name),joint,
+                         placement, name + "_joint");
+  
+  model.addJointFrame(idx);
+  
+  model.appendBodyToJoint(idx,Inertia::Random(),SE3::Identity());
+  model.addBodyFrame(name + "_body", idx);
+}
 
 BOOST_AUTO_TEST_SUITE( BOOST_TEST_MODULE )
   
@@ -104,7 +104,6 @@ BOOST_AUTO_TEST_CASE (test_dccrb)
   crba(model,data_ref,q);
   data_ref.M.triangularView<Eigen::StrictlyLower>() = data_ref.M.transpose().triangularView<Eigen::StrictlyLower>();
   
-  SE3::Vector3 com = data_ref.Ycrb[1].lever();
   SE3 cMo(SE3::Identity());
   cMo.translation() = -getComFromCrba(model, data_ref);
   
@@ -238,13 +237,13 @@ BOOST_AUTO_TEST_CASE (test_dccrb)
   }
 }
 
-BOOST_AUTO_TEST_CASE (test_computeCentroidalDynamics)
+BOOST_AUTO_TEST_CASE (test_computeCentroidalMomentum_computeCentroidalMomentumTimeVariation)
 {
   using namespace pinocchio;
   Model model;
   buildModels::humanoidRandom(model);
   addJointAndBody(model,JointModelSpherical(),"larm6_joint","larm7");
-  Data data(model), data_ref(model);
+  Data data(model), data_fk1(model), data_fk2(model), data_ref(model);
   
   model.lowerPositionLimit.head<7>().fill(-1.);
   model.upperPositionLimit.head<7>().fill( 1.);
@@ -256,7 +255,7 @@ BOOST_AUTO_TEST_CASE (test_computeCentroidalDynamics)
   ccrba(model,data_ref,q,v);
   forwardKinematics(model,data_ref,q,v);
   centerOfMass(model,data_ref,q,v,false);
-  computeCentroidalDynamics(model,data,q,v);
+  computeCentroidalMomentum(model,data,q,v);
   
   BOOST_CHECK(data.mass[0] == data_ref.mass[0]);
   BOOST_CHECK(data.com[0].isApprox(data_ref.com[0]));
@@ -268,7 +267,13 @@ BOOST_AUTO_TEST_CASE (test_computeCentroidalDynamics)
     BOOST_CHECK(data.v[k].isApprox(data_ref.v[k]));
   }
   
-  computeCentroidalDynamics(model,data,q,v,a);
+  // Check other signature
+  forwardKinematics(model,data_fk1,q,v);
+  computeCentroidalMomentum(model,data_fk1);
+  
+  BOOST_CHECK(data_fk1.hg.isApprox(data.hg));
+  
+  computeCentroidalMomentumTimeVariation(model,data,q,v,a);
   model.gravity.setZero();
   rnea(model,data_ref,q,v,a);
   dccrba(model,data_ref,q,v);
@@ -287,15 +292,22 @@ BOOST_AUTO_TEST_CASE (test_computeCentroidalDynamics)
     BOOST_CHECK(data.f[k].isApprox(data_ref.f[k]));
   }
   
+  // Check other signature
+  forwardKinematics(model,data_fk2,q,v,a);
+  computeCentroidalMomentumTimeVariation(model,data_fk2);
+  
+  BOOST_CHECK(data_fk2.hg.isApprox(data.hg));
+  BOOST_CHECK(data_fk2.dhg.isApprox(data.dhg));
+  
   // Check against finite differences
   Data data_fd(model);
   const double eps = 1e-8;
   Eigen::VectorXd v_plus = v + eps * a;
   Eigen::VectorXd q_plus = integrate(model,q,eps*v);
   
-  const Force hg = computeCentroidalDynamics(model,data_fd,q,v);
+  const Force hg = computeCentroidalMomentum(model,data_fd,q,v);
   const SE3::Vector3 com = data_fd.com[0];
-  const Force hg_plus = computeCentroidalDynamics(model,data_fd,q_plus,v_plus);
+  const Force hg_plus = computeCentroidalMomentum(model,data_fd,q_plus,v_plus);
   const SE3::Vector3 com_plus = data_fd.com[0];
   
   SE3 transform(SE3::Identity());
