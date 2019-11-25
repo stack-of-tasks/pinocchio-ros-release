@@ -1,6 +1,6 @@
-From 5d31a4daed98ee4db5027ca5f433e870e6207c13 Mon Sep 17 00:00:00 2001
+From c7345d78e01e276c97a12184fd014941c5a1b42e Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
-Date: Mon, 25 Nov 2019 12:56:41 +0000
+Date: Mon, 25 Nov 2019 18:38:35 +0000
 Subject: [PATCH] Kinetic lib prefix fix
 
 ---
