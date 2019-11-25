@@ -15,6 +15,7 @@ SET(PROJECT_USE_KEYWORD_LINK_LIBRARIES TRUE)
 # Disable -Werror on Unix for now.
 SET(CXX_DISABLE_WERROR True)
 SET(CMAKE_VERBOSE_MAKEFILE True)
+SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
 
 # Check if the submodule cmake have been initialized
 IF(NOT EXISTS "${CMAKE_SOURCE_DIR}/cmake/base.cmake")
