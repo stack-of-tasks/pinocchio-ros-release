@@ -19,8 +19,6 @@ IF(NOT EXISTS "${CMAKE_SOURCE_DIR}/cmake/base.cmake")
   MESSAGE(FATAL_ERROR "\nPlease run the following command first:\ngit submodule update --init\n")
 ENDIF()
 
-set(CMAKE_INSTALL_LIBDIR "lib")
-
 INCLUDE(cmake/base.cmake)
 IF(CMAKE_VERSION VERSION_GREATER "3.0.0")
   CMAKE_POLICY(SET CMP0048 NEW)
