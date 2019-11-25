@@ -1,0 +1,25 @@
+From 5d31a4daed98ee4db5027ca5f433e870e6207c13 Mon Sep 17 00:00:00 2001
+From: Wolfgang Merkt <w.merkt@gmail.com>
+Date: Mon, 25 Nov 2019 12:56:41 +0000
+Subject: [PATCH] Kinetic lib prefix fix
+
+---
+ CMakeLists.txt | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index be14020..984ad7d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -19,6 +19,8 @@ IF(NOT EXISTS "${CMAKE_SOURCE_DIR}/cmake/base.cmake")
+   MESSAGE(FATAL_ERROR "\nPlease run the following command first:\ngit submodule update --init\n")
+ ENDIF()
+ 
++set(CMAKE_INSTALL_LIBDIR "lib")
++
+ INCLUDE(cmake/base.cmake)
+ IF(CMAKE_VERSION VERSION_GREATER "3.0.0")
+   CMAKE_POLICY(SET CMP0048 NEW)
+-- 
+2.17.1
+
