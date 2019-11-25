@@ -7,9 +7,10 @@ from pinocchio.robot_wrapper import RobotWrapper
 
 
 def getModelPath(subpath, printmsg=False):
-    base = '../../../share/example-robot-data'
-    for path in [dirname(dirname(dirname(dirname(__file__)))),
-                 dirname(dirname(dirname(__file__)))] + [join(p, base.strip('/')) for p in sys.path]:
+    base = '../../../share/example-robot-data/robots'
+    main_dir = dirname(dirname(dirname(__file__)))
+    for path in [join(dirname(main_dir), 'robots'), join(main_dir, 'robots')
+                 ] + [join(p, base.strip('/')) for p in sys.path]:
         if exists(join(path, subpath.strip('/'))):
             if printmsg:
                 print("using %s as modelPath" % path)
@@ -236,8 +237,32 @@ def loadICub(reduced=True):
     return robot
 
 
-def loadUR(robot=5, limited=False):
-    URDF_FILENAME = "ur%i%s_robot.urdf" % (robot, "_joint_limited" if limited else '')
+def loadUR(robot=5, limited=False, gripper=False):
+    assert (not (gripper and (robot == 10 or limited)))
+    URDF_FILENAME = "ur%i%s_%s.urdf" % (robot, "_joint_limited" if limited else '', 'gripper' if gripper else 'robot')
     URDF_SUBPATH = "/ur_description/urdf/" + URDF_FILENAME
     modelPath = getModelPath(URDF_SUBPATH)
     return RobotWrapper.BuildFromURDF(modelPath + URDF_SUBPATH, [modelPath])
+
+
+def loadHector():
+    URDF_FILENAME = "quadrotor_base.urdf"
+    URDF_SUBPATH = "/hector_description/robots/" + URDF_FILENAME
+    modelPath = getModelPath(URDF_SUBPATH)
+    robot = RobotWrapper.BuildFromURDF(modelPath + URDF_SUBPATH, [modelPath], pinocchio.JointModelFreeFlyer())
+    return robot
+
+
+def loadDoublePendulum():
+    URDF_FILENAME = "double_pendulum.urdf"
+    URDF_SUBPATH = "/double_pendulum_description/urdf/" + URDF_FILENAME
+    modelPath = getModelPath(URDF_SUBPATH)
+    robot = RobotWrapper.BuildFromURDF(modelPath + URDF_SUBPATH, [modelPath])
+    return robot
+
+
+def loadRomeo():
+    URDF_FILENAME = "romeo.urdf"
+    URDF_SUBPATH = "/romeo_description/urdf/" + URDF_FILENAME
+    modelPath = getModelPath(URDF_SUBPATH)
+    return RobotWrapper.BuildFromURDF(modelPath + URDF_SUBPATH, [modelPath], pinocchio.JointModelFreeFlyer())
