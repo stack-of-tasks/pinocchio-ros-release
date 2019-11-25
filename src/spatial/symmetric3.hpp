@@ -64,7 +64,7 @@ namespace pinocchio
     static Symmetric3Tpl Identity() { return Symmetric3Tpl(1, 0, 1, 0, 0, 1);  }
     void setIdentity() { m_data << 1, 0, 1, 0, 0, 1; }
 
-    /* Requiered by Inertia::operator== */
+    /* Required by Inertia::operator== */
     bool operator==(const Symmetric3Tpl & other) const
     { return m_data == other.m_data; }
     
@@ -74,6 +74,9 @@ namespace pinocchio
     bool isApprox(const Symmetric3Tpl & other,
                   const Scalar & prec = Eigen::NumTraits<Scalar>::dummy_precision()) const
     { return m_data.isApprox(other.m_data,prec); }
+    
+    bool isZero(const Scalar & prec = Eigen::NumTraits<Scalar>::dummy_precision()) const
+    { return m_data.isZero(prec); }
     
     void fill(const Scalar value) { m_data.fill(value); }
     
