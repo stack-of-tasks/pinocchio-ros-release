@@ -36,12 +36,10 @@ int main(int argc, const char ** argv)
     
   pinocchio::Model model;
 
-  std::string filename = PINOCCHIO_SOURCE_DIR"/models/simple_humanoid.urdf";
+  std::string filename = PINOCCHIO_MODEL_DIR + std::string("/simple_humanoid.urdf");
   if(argc>1) filename = argv[1];
   if( filename == "HS") 
     pinocchio::buildModels::humanoidRandom(model,true);
-  else if( filename == "H2" )
-    pinocchio::buildModels::humanoid2d(model);
   else
     pinocchio::urdf::buildModel(filename,JointModelFreeFlyer(),model);
   std::cout << "nq = " << model.nq << std::endl;
