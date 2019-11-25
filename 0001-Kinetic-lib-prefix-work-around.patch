@@ -1,0 +1,24 @@
+From 5849f3a8470657ace2614347732a855d19fa980f Mon Sep 17 00:00:00 2001
+From: Wolfgang Merkt <w.merkt@gmail.com>
+Date: Mon, 25 Nov 2019 19:51:05 +0000
+Subject: [PATCH] Kinetic lib prefix work-around
+
+---
+ CMakeLists.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 459a7b0..527eb50 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -13,6 +13,7 @@ SET(PROJECT_CUSTOM_HEADER_EXTENSION "hpp")
+ # Disable -Werror on Unix for now.
+ SET(CXX_DISABLE_WERROR True)
+ SET(CMAKE_VERBOSE_MAKEFILE True)
++SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
+ 
+ # Check if the submodule cmake have been initialized
+ IF(NOT EXISTS "${CMAKE_SOURCE_DIR}/cmake/base.cmake")
+-- 
+2.17.1
+
