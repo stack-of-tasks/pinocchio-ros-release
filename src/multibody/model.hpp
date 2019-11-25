@@ -111,10 +111,6 @@ namespace pinocchio
 
     /// \brief Name of joint *i*
     std::vector<std::string> names;
-    
-    /// \brief Vector of joint's neutral configurations
-    PINOCCHIO_DEPRECATED
-    ConfigVectorType neutralConfiguration;
 
     /// \brief Map of reference configurations, indexed by user given names.
     ConfigVectorMap referenceConfigurations;
@@ -209,11 +205,6 @@ namespace pinocchio
       res.nvs = nvs;
       
       // Eigen Vectors
-      // TODO: remove this pragma when neutralConfiguration will be removed
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-      res.neutralConfiguration = neutralConfiguration.template cast<NewScalar>();
-#pragma GCC diagnostic pop
       res.rotorInertia = rotorInertia.template cast<NewScalar>();
       res.rotorGearRatio = rotorGearRatio.template cast<NewScalar>();
       res.effortLimit = effortLimit.template cast<NewScalar>();
@@ -276,46 +267,37 @@ namespace pinocchio
       && other.nqs == nqs
       && other.idx_vs == idx_vs
       && other.nvs == nvs;
-      
-      /// TODO: remove this pragma when neutralConfiguration will be removed
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-      if(other.neutralConfiguration.size() != neutralConfiguration.size())
-        return false;
-      res &= other.neutralConfiguration == neutralConfiguration;
-      if(!res) return res;
-#pragma GCC diagnostic pop
-      
+
       if(other.referenceConfigurations.size() != referenceConfigurations.size())
         return false;
       res &= other.referenceConfigurations == referenceConfigurations;
       if(!res) return res;
-      
+
       if(other.rotorInertia.size() != rotorInertia.size())
         return false;
       res &= other.rotorInertia == rotorInertia;
       if(!res) return res;
-      
+
       if(other.rotorGearRatio.size() != rotorGearRatio.size())
         return false;
       res &= other.rotorGearRatio == rotorGearRatio;
       if(!res) return res;
-      
+
       if(other.effortLimit.size() != effortLimit.size())
         return false;
       res &= other.effortLimit == effortLimit;
       if(!res) return res;
-      
+
       if(other.velocityLimit.size() != velocityLimit.size())
         return false;
       res &= other.velocityLimit == velocityLimit;
       if(!res) return res;
-      
+
       if(other.lowerPositionLimit.size() != lowerPositionLimit.size())
         return false;
       res &= other.lowerPositionLimit == lowerPositionLimit;
       if(!res) return res;
-      
+
       if(other.upperPositionLimit.size() != upperPositionLimit.size())
         return false;
       res &= other.upperPositionLimit == upperPositionLimit;
@@ -340,7 +322,7 @@ namespace pinocchio
       return res;
     }
     
-    //
+    ///
     /// \returns true if *this is NOT equal to other.
     ///
     bool operator!=(const ModelTpl & other) const
@@ -368,9 +350,8 @@ namespace pinocchio
     ///
     /// \sa Model::appendBodyToJoint, Model::addJointFrame
     ///
-    template<typename JointModelDerived>
     JointIndex addJoint(const JointIndex parent,
-                        const JointModelBase<JointModelDerived> & joint_model,
+                        const JointModel & joint_model,
                         const SE3 & joint_placement,
                         const std::string & joint_name,
                         const VectorXs & max_effort,
@@ -396,12 +377,10 @@ namespace pinocchio
     ///
     /// \sa Model::appendBodyToJoint
     ///
-    template<typename JointModelDerived>
     JointIndex addJoint(const JointIndex parent,
-                        const JointModelBase<JointModelDerived> & joint_model,
+                        const JointModel & joint_model,
                         const SE3 & joint_placement,
-                        const std::string & joint_name
-                        );
+                        const std::string & joint_name);
 
     ///
     /// \brief Add a joint to the frame tree.
@@ -412,8 +391,8 @@ namespace pinocchio
     ///
     /// \return The index of the new frame or -1 in case of error.
     ///
-    int addJointFrame(const JointIndex& jointIndex,
-                      int frameIndex = -1);
+    int addJointFrame(const JointIndex & joint_index,
+                      int previous_frame_index = -1);
 
     ///
     /// \brief Append a body to a given joint of the kinematic tree.
@@ -445,11 +424,11 @@ namespace pinocchio
 
     ///
     /// \brief Return the index of a body given by its name.
-    /// 
+    ///
     /// \warning If no body is found, return the number of elements at time T.
     /// This can lead to errors if the model is expanded after this method is called
     /// (for example to get the id of a parent body)
-    /// 
+    ///
     /// \param[in] name Name of the body.
     ///
     /// \return Index of the body.
@@ -486,16 +465,6 @@ namespace pinocchio
     /// \return True if the joint exists in the kinematic tree.
     ///
     bool existJointName(const std::string & name) const;
-    
-    ///
-    /// \brief Get the name of a joint given by its index.
-    ///
-    /// \param[in] index Index of the joint.
-    ///
-    /// \return Name of the joint.
-    ///
-    PINOCCHIO_DEPRECATED
-    const std::string & getJointName(const JointIndex index) const;
 
     ///
     /// \brief Returns the index of a frame given by its name.
@@ -504,7 +473,7 @@ namespace pinocchio
     /// \warning If no frame is found, returns the size of the vector of Model::frames.
     /// This can lead to errors if the model is expanded after this method is called
     /// (for example to get the id of a parent frame).
-    /// 
+    ///
     /// \param[in] name Name of the frame.
     /// \param[in] type Type of the frame.
     ///
@@ -524,7 +493,6 @@ namespace pinocchio
     bool existFrame(const std::string & name,
                     const FrameType& type = (FrameType) (JOINT | FIXED_JOINT | BODY | OP_FRAME | SENSOR )) const;
     
-    
     ///
     /// \brief Adds a frame to the kinematic tree.
     ///
@@ -535,13 +503,16 @@ namespace pinocchio
     ///
     int addFrame(const Frame & frame);
 
+    ///
     /// \brief Check the validity of the attributes of Model with respect to the specification of some
     /// algorithms.
     ///
     /// The method is a template so that the checkers can be defined in each algorithms.
     /// \param[in] checker a class, typically defined in the algorithm module, that 
     /// validates the attributes of model.
+    ///
     /// \return true if the Model is valid, false otherwise.
+    ///
     template<typename D>
     inline bool check(const AlgorithmCheckerBase<D> & checker = AlgorithmCheckerBase<D>()) const
     { return checker.checkModel(*this); }
@@ -549,15 +520,18 @@ namespace pinocchio
     /// Run check(fusion::list) with DEFAULT_CHECKERS as argument.
     inline bool check() const;
     
+    ///
     /// \brief Run checkData on data and current model.
     ///
     /// \param[in] data to be checked wrt *this.
     ///
     /// \return true if the data is valid, false otherwise.
+    ///
     inline bool check(const Data & data) const;
 
   protected:
     
+    ///
     /// \brief Add the joint_id to its parent subtrees.
     ///
     /// \param[in] joint_id The id of the joint to add to the subtrees

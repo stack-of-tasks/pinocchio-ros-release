@@ -31,17 +31,6 @@ namespace pinocchio
                               const std::string & filename,
                               const bool verbose = false);
     
-    /// \copydoc removeCollisionPairs
-    template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl>
-    PINOCCHIO_DEPRECATED
-    void removeCollisionPairsFromSrdf(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
-                                      GeometryModel & geomModel,
-                                      const std::string & filename,
-                                      const bool verbose = false)
-    {
-      removeCollisionPairs(model,geomModel,filename,verbose);
-    }
-    
     ///
     /// \brief Deactive all possible collision pairs mentioned in the SRDF file.
     ///
@@ -57,45 +46,7 @@ namespace pinocchio
                                      const std::string & xmlString,
                                      const bool verbose = false);
     
-    /// \copydoc removeCollisionPairsFromXML
-    template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl>
-    PINOCCHIO_DEPRECATED
-    void removeCollisionPairsFromSrdfString(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
-                                            GeometryModel & geomModel,
-                                            const std::string & xmlString,
-                                            const bool verbose = false)
-    {
-      removeCollisionPairsFromXML(model,geomModel,xmlString,verbose);
-    }
-    
 #endif // ifdef PINOCCHIO_WITH_HPP_FCL
-
-    ///
-    /// \brief Get the neutral configuration of a given model associated to a SRDF file.
-    ///        It throws if the SRDF file is incorrect.
-    ///
-    /// \param[in] model The Model for which we want the neutral config
-    /// \param[in] filename The complete path to the SRDF file.
-    /// \param[in] verbose Verbosity mode.
-    ///
-    /// \return The neutral configuration as an eigen vector
-    ///
-    template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl>
-    PINOCCHIO_DEPRECATED
-    typename ModelTpl<Scalar,Options,JointCollectionTpl>::ConfigVectorType
-    getNeutralConfiguration(ModelTpl<Scalar,Options,JointCollectionTpl> & model,
-                            const std::string & filename,
-                            const bool verbose = false);
-    
-    /// \copydoc pinocchio::srdf::getNeutralConfiguration
-    template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl>
-    PINOCCHIO_DEPRECATED
-    typename ModelTpl<Scalar,Options,JointCollectionTpl>::ConfigVectorType
-    getNeutralConfigurationFromSrdf(ModelTpl<Scalar,Options,JointCollectionTpl> & model,
-                                    const std::string & filename,
-                                    const bool verbose = false)
-    { return getNeutralConfiguration(model,filename,verbose); }
-
 
     ///
     /// \brief Get the reference configurations of a given model associated to a SRDF file.
@@ -140,16 +91,6 @@ namespace pinocchio
     bool loadRotorParameters(ModelTpl<Scalar,Options,JointCollectionTpl> & model,
                              const std::string & filename,
                              const bool verbose = false);
-    
-    /// \copydoc pinocchio::srdf::loadRotorParameters
-    template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl>
-    PINOCCHIO_DEPRECATED
-    bool loadRotorParamsFromSrdf(ModelTpl<Scalar,Options,JointCollectionTpl> & model,
-                                 const std::string & filename,
-                                 const bool verbose = false)
-    {
-      return loadRotorParameters(model,filename,verbose);
-    }
     
   }
 } // namespace pinocchio

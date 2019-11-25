@@ -9,6 +9,10 @@
 #include "pinocchio/multibody/model.hpp"
 #include "pinocchio/parsers/urdf.hpp"
 
+#ifdef PINOCCHIO_WITH_HPP_FCL
+#include <hpp/fcl/collision_object.h>
+#endif // PINOCCHIO_WITH_HPP_FCL
+
 #include <boost/test/unit_test.hpp>
 
 #include <urdf_parser/urdf_parser.h>
@@ -18,8 +22,8 @@ BOOST_AUTO_TEST_SUITE ( BOOST_TEST_MODULE )
 
 BOOST_AUTO_TEST_CASE ( build_model )
 {
-  const std::string filename = PINOCCHIO_SOURCE_DIR"/models/romeo/romeo_description/urdf/romeo_small.urdf";
-  const std::string dir = PINOCCHIO_SOURCE_DIR"/models/romeo";
+  const std::string filename = PINOCCHIO_MODEL_DIR + std::string("/others/robots/romeo_description/urdf/romeo_small.urdf");
+  const std::string dir = PINOCCHIO_MODEL_DIR + std::string("/others/robots");
   
   pinocchio::Model model;
   pinocchio::urdf::buildModel(filename, model);
@@ -31,12 +35,40 @@ BOOST_AUTO_TEST_CASE ( build_model )
 
 BOOST_AUTO_TEST_CASE ( build_model_simple_humanoid )
 {
-  const std::string filename = PINOCCHIO_SOURCE_DIR"/models/simple_humanoid.urdf";
+  const std::string filename = PINOCCHIO_MODEL_DIR + std::string("/simple_humanoid.urdf");
+  const std::string dir = PINOCCHIO_MODEL_DIR;
 
   pinocchio::Model model;
   pinocchio::urdf::buildModel(filename, model);
 
-  BOOST_CHECK(model.nq == 29);
+  BOOST_CHECK_EQUAL(model.nq, 29);
+
+  // Check that parsing collision_checking works.
+  pinocchio::GeometryModel geomModel;
+  pinocchio::urdf::buildGeom(model, filename, pinocchio::COLLISION, geomModel, dir);
+  BOOST_CHECK_EQUAL(geomModel.ngeoms, 2);
+
+#ifdef PINOCCHIO_WITH_HPP_FCL
+  // Check that cylinder is converted into capsule.
+#ifdef PINOCCHIO_URDFDOM_COLLISION_WITH_GROUP_NAME
+  BOOST_CHECK_EQUAL(geomModel.geometryObjects[0].fcl->getNodeType(), hpp::fcl::GEOM_CYLINDER);
+#else // PINOCCHIO_URDFDOM_COLLISION_WITH_GROUP_NAME
+  BOOST_CHECK_EQUAL(geomModel.geometryObjects[0].fcl->getNodeType(), hpp::fcl::GEOM_CAPSULE);
+#endif
+
+#if ( HPP_FCL_MAJOR_VERSION>1 || ( HPP_FCL_MAJOR_VERSION==1 && \
+      ( HPP_FCL_MINOR_VERSION>1 || ( HPP_FCL_MINOR_VERSION==1 && \
+                                     HPP_FCL_PATCH_VERSION>3))))
+#  define PINOCCHIO_HPP_FCL_SUPERIOR_TO_1_1_3
+#endif
+
+#if defined(PINOCCHIO_HPP_FCL_SUPERIOR_TO_1_1_3) && !defined(PINOCCHIO_URDFDOM_COLLISION_WITH_GROUP_NAME)
+  BOOST_CHECK_EQUAL(geomModel.geometryObjects[1].fcl->getNodeType(), hpp::fcl::GEOM_CONVEX);
+#undef PINOCCHIO_HPP_FCL_SUPERIOR_TO_1_1_3
+#else // PINOCCHIO_HPP_FCL_SUPERIOR_TO_1_1_3 && !PINOCCHIO_URDFDOM_COLLISION_WITH_GROUP_NAME
+  BOOST_CHECK_EQUAL(geomModel.geometryObjects[1].fcl->getObjectType(), hpp::fcl::OT_BVH);
+#endif // PINOCCHIO_HPP_FCL_SUPERIOR_TO_1_1_3 && !PINOCCHIO_URDFDOM_COLLISION_WITH_GROUP_NAME
+#endif // PINOCCHIO_WITH_HPP_FCL
   
   pinocchio::Model model_ff;
   pinocchio::urdf::buildModel(filename, pinocchio::JointModelFreeFlyer(), model_ff);
@@ -46,7 +78,7 @@ BOOST_AUTO_TEST_CASE ( build_model_simple_humanoid )
   
 BOOST_AUTO_TEST_CASE ( build_model_from_XML )
 {
-  const std::string filename = PINOCCHIO_SOURCE_DIR"/models/romeo/romeo_description/urdf/romeo_small.urdf";
+  const std::string filename = PINOCCHIO_MODEL_DIR + std::string("/others/robots/romeo_description/urdf/romeo_small.urdf");
   
   // Read file as XML
   std::ifstream file;
@@ -62,7 +94,7 @@ BOOST_AUTO_TEST_CASE ( build_model_from_XML )
 
 BOOST_AUTO_TEST_CASE ( build_model_from_UDRFTree )
 {
-  const std::string filename = PINOCCHIO_SOURCE_DIR"/models/romeo/romeo_description/urdf/romeo_small.urdf";
+  const std::string filename = PINOCCHIO_MODEL_DIR + std::string("/others/robots/romeo_description/urdf/romeo_small.urdf");
   
   ::urdf::ModelInterfaceSharedPtr urdfTree = ::urdf::parseURDFFile(filename);
   
@@ -74,8 +106,8 @@ BOOST_AUTO_TEST_CASE ( build_model_from_UDRFTree )
   
 BOOST_AUTO_TEST_CASE ( build_model_with_joint )
 {
-  const std::string filename = PINOCCHIO_SOURCE_DIR"/models/romeo/romeo_description/urdf/romeo_small.urdf";
-  const std::string dir = PINOCCHIO_SOURCE_DIR"/models/romeo";
+  const std::string filename = PINOCCHIO_MODEL_DIR + std::string("/others/robots/romeo_description/urdf/romeo_small.urdf");
+  const std::string dir = PINOCCHIO_MODEL_DIR + std::string("/others/robots");
   
   pinocchio::Model model;
   pinocchio::urdf::buildModel(filename, pinocchio::JointModelFreeFlyer(), model);
@@ -87,7 +119,7 @@ BOOST_AUTO_TEST_CASE ( build_model_with_joint )
 
 BOOST_AUTO_TEST_CASE ( build_model_with_joint_from_XML )
 {
-  const std::string filename = PINOCCHIO_SOURCE_DIR"/models/romeo/romeo_description/urdf/romeo_small.urdf";
+  const std::string filename = PINOCCHIO_MODEL_DIR + std::string("/others/robots/romeo_description/urdf/romeo_small.urdf");
   
   // Read file as XML
   std::ifstream file;
@@ -103,7 +135,7 @@ BOOST_AUTO_TEST_CASE ( build_model_with_joint_from_XML )
 
 BOOST_AUTO_TEST_CASE ( build_model_with_joint_from_UDRFTree )
 {
-  const std::string filename = PINOCCHIO_SOURCE_DIR"/models/romeo/romeo_description/urdf/romeo_small.urdf";
+  const std::string filename = PINOCCHIO_MODEL_DIR + std::string("/others/robots/romeo_description/urdf/romeo_small.urdf");
   
   ::urdf::ModelInterfaceSharedPtr urdfTree = ::urdf::parseURDFFile(filename);
   

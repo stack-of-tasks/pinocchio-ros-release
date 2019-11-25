@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2018 CNRS
+# Copyright (c) 2015-2019 CNRS INRIA
 #
 
 # ----------------------------------------------------
@@ -18,7 +18,7 @@ MACRO(ADD_BENCH bench_name)
   IF(NumExtraMacroArgs GREATER 0)
     SET(link_to_main_lib ${ARGV1})
     IF(link_to_main_lib)
-      SET_TARGET_PROPERTIES(${bench_name} PROPERTIES COMPILE_DEFINITIONS PINOCCHIO_SOURCE_DIR="${${PROJECT_NAME}_SOURCE_DIR}")
+      SET_TARGET_PROPERTIES(${bench_name} PROPERTIES COMPILE_DEFINITIONS PINOCCHIO_MODEL_DIR="${PINOCCHIO_MODEL_DIR}")
       TARGET_LINK_LIBRARIES(${bench_name} ${PROJECT_NAME})
       PKG_CONFIG_USE_DEPENDENCY(${bench_name} eigen3)
 
@@ -57,7 +57,6 @@ ADD_BENCH(timings-cholesky TRUE)
 # timings derivatives
  
 ADD_BENCH(timings-derivatives TRUE)
-TARGET_LINK_LIBRARIES(timings-derivatives ${PROJECT_NAME})
 IF(CPPAD_FOUND)
   PKG_CONFIG_USE_DEPENDENCY(timings-derivatives "cppad")
 ENDIF(CPPAD_FOUND)
@@ -69,6 +68,7 @@ ENDIF(CPPADCG_FOUND)
 # timings-eigen
 # 
 ADD_BENCH(timings-eigen)
+PKG_CONFIG_USE_DEPENDENCY(timings-eigen "eigen3")
 
 # timings-geometry
 # 

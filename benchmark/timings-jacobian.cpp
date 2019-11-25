@@ -32,7 +32,7 @@ int main(int argc, const char ** argv)
 
   pinocchio::Model model;
 
-  std::string filename = PINOCCHIO_SOURCE_DIR"/models/simple_humanoid.urdf";
+  std::string filename = PINOCCHIO_MODEL_DIR + std::string("/simple_humanoid.urdf");
   if(argc>1) filename = argv[1];
 
   bool with_ff = true;
@@ -76,9 +76,9 @@ int main(int argc, const char ** argv)
   timer.tic();
   SMOOTH(NBT)
   {
-    jointJacobian(model,data,qs[_smooth],JOINT_ID,J);
+    computeJointJacobian(model,data,qs[_smooth],JOINT_ID,J);
   }
-  std::cout << "jointJacobian = \t\t"; timer.toc(std::cout,NBT);
+  std::cout << "computeJointJacobian = \t\t"; timer.toc(std::cout,NBT);
 
   timer.tic();
   SMOOTH(NBT)
