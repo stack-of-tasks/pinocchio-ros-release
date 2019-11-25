@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015-2018 CNRS
+// Copyright (c) 2015-2019 CNRS INRIA
 // Copyright (c) 2015 Wandercraft, 86 rue de Paris 91400 Orsay, France.
 //
 
@@ -192,7 +192,6 @@ namespace pinocchio
       details::addManipulator(model);
     }
     
-    
 #ifdef PINOCCHIO_WITH_HPP_FCL
     template<typename Scalar, int Options,
              template<typename,int> class JointCollectionTpl>
@@ -200,43 +199,6 @@ namespace pinocchio
                                GeometryModel & geom)
     { details::addManipulatorGeometries(model,geom); }
 #endif
-    
-    // Deprecated
-    inline void humanoid2d(Model & model)
-    {
-      using details::addJointAndBody;
-      static const Model::SE3 Id = Model::SE3::Identity();
-      
-      // root
-      addJointAndBody(model, JointModelRX(), "universe", "ff1", Id, false);
-      addJointAndBody(model, JointModelRY(), "ff1_joint", "root", Id, false);
-      
-      // lleg
-      addJointAndBody(model, JointModelRZ(), "root_joint", "lleg1", Id, false);
-      addJointAndBody(model, JointModelRY(), "lleg1_joint", "lleg2", Id, false);
-      
-      // rlgg
-      addJointAndBody(model, JointModelRZ(), "root_joint", "rleg1", Id, false);
-      addJointAndBody(model, JointModelRY(), "lleg1_joint", "rleg2", Id, false);
-      
-      // torso
-      addJointAndBody(model, JointModelRY(), "root_joint", "torso1", Id, false);
-      addJointAndBody(model, JointModelRZ(), "torso1_joint", "chest", Id, false);
-      
-      // rarm
-      addJointAndBody(model, JointModelRX(), "chest_joint", "rarm1", Id, false);
-      addJointAndBody(model, JointModelRZ(), "rarm1_joint", "rarm2", Id, false);
-      
-      // larm
-      addJointAndBody(model, JointModelRX(), "root_joint", "larm1", Id, false);
-      addJointAndBody(model, JointModelRZ(), "larm1_joint", "larm2", Id, false);
-    }
-
-    template<typename Scalar, int Options,
-             template<typename,int> class JointCollectionTpl>
-    inline void humanoidSimple(ModelTpl<Scalar,Options,JointCollectionTpl> & model,
-                               bool usingFF)
-    { humanoidRandom(model,usingFF); }
 
     template<typename Scalar, int Options,
              template<typename,int> class JointCollectionTpl>
@@ -344,10 +306,10 @@ namespace pinocchio
       
       details::addManipulator(model,ffidx,
                               SE3(details::rotate(M_PI,SE3::Vector3::UnitX()),
-                                  typename  SE3::Vector3(0,-0.2,-.1)),"rleg");
+                                  typename  SE3::Vector3(0,-0.2,-.1)),"rleg_");
       details::addManipulator(model,ffidx,
                               SE3(details::rotate(M_PI,SE3::Vector3::UnitX()),
-                                  typename  SE3::Vector3(0, 0.2,-.1)),"lleg");
+                                  typename  SE3::Vector3(0, 0.2,-.1)),"lleg_");
       
       model.jointPlacements[7 ].rotation()
       = details::rotate(M_PI/2,SE3::Vector3::UnitY()); // rotate right foot
@@ -386,10 +348,10 @@ namespace pinocchio
       /* --- Upper Limbs --- */
       details::addManipulator(model,chest,
                               SE3(details::rotate(M_PI,SE3::Vector3::UnitX()),
-                                  typename SE3::Vector3(0,-0.3, 1.)),"rarm");
+                                  typename SE3::Vector3(0,-0.3, 1.)),"rarm_");
       details::addManipulator(model,chest,
                               SE3(details::rotate(M_PI,SE3::Vector3::UnitX()),
-                                  typename SE3::Vector3(0, 0.3, 1.)),"larm");
+                                  typename SE3::Vector3(0, 0.3, 1.)),"larm_");
     }
     
 #ifdef PINOCCHIO_WITH_HPP_FCL
@@ -402,10 +364,10 @@ namespace pinocchio
       typedef typename Model::FrameIndex FrameIndex;
       typedef typename Model::SE3 SE3;
       
-      details::addManipulatorGeometries(model,geom,"rleg");
-      details::addManipulatorGeometries(model,geom,"lleg");
-      details::addManipulatorGeometries(model,geom,"rarm");
-      details::addManipulatorGeometries(model,geom,"larm");
+      details::addManipulatorGeometries(model,geom,"rleg_");
+      details::addManipulatorGeometries(model,geom,"lleg_");
+      details::addManipulatorGeometries(model,geom,"rarm_");
+      details::addManipulatorGeometries(model,geom,"larm_");
       
       FrameIndex parentFrame;
       

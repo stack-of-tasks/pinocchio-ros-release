@@ -94,16 +94,7 @@ namespace pinocchio
     assert(theta == theta && "theta contains some NaN"); // theta != NaN
     
     // From runs of hpp-constraints/tests/logarithm.cc: 1e-6 is too small.
-    if (theta < PI_value - 1e-2)
-    {
-      const Scalar t = ((theta > TaylorSeriesExpansion<Scalar>::template precision<3>())
-                        ? theta / sin(theta)
-                        : Scalar(1)) / Scalar(2);
-      res(0) = t * (R (2, 1) - R (1, 2));
-      res(1) = t * (R (0, 2) - R (2, 0));
-      res(2) = t * (R (1, 0) - R (0, 1));
-    }
-    else
+    if(theta >= PI_value - 1e-2)
     {
       // 1e-2: A low value is not required since the computation is
       // using explicit formula. However, the precision of this method
@@ -114,7 +105,16 @@ namespace pinocchio
       Vector3 tmp((R.diagonal().array() + cphi) * beta);
       res(0) = (R (2, 1) > R (1, 2) ? Scalar(1) : Scalar(-1)) * (tmp[0] > Scalar(0) ? sqrt(tmp[0]) : Scalar(0));
       res(1) = (R (0, 2) > R (2, 0) ? Scalar(1) : Scalar(-1)) * (tmp[1] > Scalar(0) ? sqrt(tmp[1]) : Scalar(0));
-      res(2) = (R (1, 0) > R (0, 1) ? Scalar(1) : Scalar(-1)) * (tmp[2] > Scalar(0) ? sqrt(tmp[2]) : Scalar(0));
+      res(2) = (R (1, 0) > R (0, 1) ? Scalar(1) : Scalar(-1)) * (tmp[2] > Scalar(0) ? sqrt(tmp[2]) : Scalar(0));    }
+    else
+    {
+      const Scalar t = ((theta > TaylorSeriesExpansion<Scalar>::template precision<3>())
+                        ? theta / sin(theta)
+                        : Scalar(1)) / Scalar(2);
+      res(0) = t * (R (2, 1) - R (1, 2));
+      res(1) = t * (R (0, 2) - R (2, 0));
+      res(2) = t * (R (1, 0) - R (0, 1));
+
     }
     
     return res;
@@ -185,6 +185,18 @@ namespace pinocchio
     Jout.noalias() += c * r * r.transpose();
   }
 
+  /** \brief Derivative of log3
+   *
+   *  \param[in] theta the angle value.
+   *  \param[in] log the output of log3.
+   *  \param[out] Jlog the jacobian
+   *
+   *  \f[ Jlog = \frac{\theta \sin(\theta)}{2 (1 - \cos(\theta))} I_3
+   *             + \frac{1}{2} \hat{\log}
+   *             + (\frac{1}{\theta^2} - \frac{\sin(\theta)}{2\theta(1-\cos(\theta))}) \log \log^T
+   *  \f]
+   *  \note the inputs must be such that \f$ \theta = ||\log|| \f$
+   */
   template<typename Scalar, typename Vector3Like, typename Matrix3Like>
   void Jlog3(const Scalar & theta,
              const Eigen::MatrixBase<Vector3Like> & log,
@@ -221,6 +233,18 @@ namespace pinocchio
     }
   }
 
+  /** \brief Derivative of log3
+   *
+   *  \param[in] R the rotation matrix.
+   *  \param[out] Jlog the jacobian
+   *
+   *  Equivalent to
+   *  \code
+   *  double theta;
+   *  Vector3 log = pinocchio::log3 (R, theta);
+   *  pinocchio::Jlog3 (theta, log, Jlog);
+   *  \endcode
+   */
   template<typename Matrix3Like1, typename Matrix3Like2>
   void Jlog3(const Eigen::MatrixBase<Matrix3Like1> & R,
              const Eigen::MatrixBase<Matrix3Like2> & Jlog)
@@ -316,7 +340,7 @@ namespace pinocchio
 
   /// \brief Log: SE3 -> se3.
   ///
-  /// Pseudo-inverse of exp from SE3 -> { v,w \in se3, ||w|| < 2pi }.
+  /// Pseudo-inverse of exp from \f$ SE3 \to { v,\omega \in \mathfrak{se}(3), ||\omega|| < 2\pi } \f$.
   ///
   /// \param[in] M The rigid transformation.
   ///
@@ -355,9 +379,9 @@ namespace pinocchio
 
   /// \brief Log: SE3 -> se3.
   ///
-  /// Pseudo-inverse of exp from SE3 -> { v,w \in se3, ||w|| < 2pi }.
+  /// Pseudo-inverse of exp from \f$ SE3 \to { v,\omega \in \mathfrak{se}(3), ||\omega|| < 2\pi } \f$.
   ///
-  /// \param[in] R The rigid transformation represented as an homogenous matrix.
+  /// \param[in] M The rigid transformation represented as an homogenous matrix.
   ///
   /// \return The twist associated to the rigid transformation during time 1.
   ///
