@@ -169,7 +169,7 @@ namespace pinocchio
   void
   appendModel(const ModelTpl<Scalar,Options,JointCollectionTpl> & modelA,
               const ModelTpl<Scalar,Options,JointCollectionTpl> & modelB,
-              FrameIndex frameInModelA,
+              const FrameIndex frameInModelA,
               const SE3Tpl<Scalar, Options> & aMb,
               ModelTpl<Scalar,Options,JointCollectionTpl> & model)
   {
@@ -185,13 +185,16 @@ namespace pinocchio
               const ModelTpl<Scalar,Options,JointCollectionTpl> & modelB,
               const GeometryModel& geomModelA,
               const GeometryModel& geomModelB,
-              FrameIndex frameInModelA,
+              const FrameIndex frameInModelA,
               const SE3Tpl<Scalar, Options>& aMb,
               ModelTpl<Scalar,Options,JointCollectionTpl>& model,
               GeometryModel& geomModel)
   {
     typedef details::AppendJointOfModelAlgoTpl<Scalar, Options, JointCollectionTpl> AppendJointOfModelAlgo;
     typedef typename AppendJointOfModelAlgo::ArgsType ArgsType;
+    
+    PINOCCHIO_CHECK_INPUT_ARGUMENT(frameInModelA < (FrameIndex) modelA.nframes,
+                                   "frameInModelA is an invalid Frame index, greater than the number of frames contained in modelA.");
     
     typedef ModelTpl<Scalar,Options,JointCollectionTpl> Model;
     typedef typename Model::SE3 SE3;
@@ -274,10 +277,11 @@ namespace pinocchio
   }
 
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType>
-  ModelTpl<Scalar,Options,JointCollectionTpl>
+  void
   buildReducedModel(const ModelTpl<Scalar,Options,JointCollectionTpl> & input_model,
                     std::vector<JointIndex> list_of_joints_to_lock,
-                    const Eigen::MatrixBase<ConfigVectorType> & reference_configuration)
+                    const Eigen::MatrixBase<ConfigVectorType> & reference_configuration,
+                    ModelTpl<Scalar,Options,JointCollectionTpl> & reduced_model)
   {
     PINOCCHIO_CHECK_INPUT_ARGUMENT(reference_configuration.size() == input_model.nq,
                                    "The configuration vector is not of right size");
@@ -289,8 +293,6 @@ namespace pinocchio
     typedef typename Model::JointData JointData;
     typedef typename Model::Frame Frame;
     typedef typename Model::SE3 SE3;
-    
-    Model reduced_model;
     
     // Sort indexes
     std::sort(list_of_joints_to_lock.begin(),list_of_joints_to_lock.end());
@@ -449,10 +451,66 @@ namespace pinocchio
         reduced_model.addFrame(reduced_frame);
       }
     }
-    
-    return reduced_model;
   }
 
+  template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType>
+  void
+  buildReducedModel(const ModelTpl<Scalar,Options,JointCollectionTpl> & input_model,
+                    const GeometryModel & input_geom_model,
+                    const std::vector<JointIndex> & list_of_joints_to_lock,
+                    const Eigen::MatrixBase<ConfigVectorType> & reference_configuration,
+                    ModelTpl<Scalar,Options,JointCollectionTpl> & reduced_model,
+                    GeometryModel & reduced_geom_model)
+  {
+    typedef ModelTpl<Scalar,Options,JointCollectionTpl> Model;
+    buildReducedModel(input_model,list_of_joints_to_lock,reference_configuration,reduced_model);
+    
+    // Add all the geometries
+    typedef GeometryModel::GeometryObject GeometryObject;
+    typedef GeometryModel::GeometryObjectVector GeometryObjectVector;
+    for(GeometryObjectVector::const_iterator it = input_geom_model.geometryObjects.begin();
+        it != input_geom_model.geometryObjects.end(); ++it)
+    {
+      const GeometryModel::GeometryObject & geom = *it;
+      
+      const JointIndex joint_id_in_input_model = geom.parentJoint;
+      PINOCCHIO_CHECK_INPUT_ARGUMENT(joint_id_in_input_model < (JointIndex)input_model.njoints,
+                                     "Invalid joint parent index for the geometry with name " + geom.name);
+      const std::string & parent_joint_name = input_model.names[joint_id_in_input_model];
+      
+      JointIndex reduced_joint_id = (JointIndex)-1;
+      typedef typename Model::SE3 SE3;
+      SE3 relative_placement = SE3::Identity();
+      if(reduced_model.existJointName(parent_joint_name))
+      {
+        reduced_joint_id = reduced_model.getJointId(parent_joint_name);
+      }
+      else // The joint is now a frame
+      {
+        const FrameIndex reduced_frame_id = reduced_model.getFrameId(parent_joint_name);
+        reduced_joint_id = reduced_model.frames[reduced_frame_id].parent;
+        relative_placement = reduced_model.frames[reduced_frame_id].placement;
+      }
+      
+      GeometryObject reduced_geom(geom);
+      reduced_geom.parentJoint = reduced_joint_id;
+      reduced_geom.placement = relative_placement * geom.placement;
+      reduced_geom_model.addGeometryObject(reduced_geom);
+    }
+    
+#ifdef PINOCCHIO_WITH_HPP_FCL
+    // Add all the collision pairs - the index of the geometry objects should have not changed
+    
+    typedef GeometryModel::CollisionPairVector CollisionPairVector;
+    for(CollisionPairVector::const_iterator it = input_geom_model.collisionPairs.begin();
+        it != input_geom_model.collisionPairs.end(); ++it)
+    {
+      const CollisionPair & cp = *it;
+      reduced_geom_model.addCollisionPair(cp);
+    }
+#endif
+    
+  }
 
 } // namespace pinocchio
 

@@ -34,10 +34,17 @@ jobs:
         export MAKEFLAGS="-j2"
         mkdir build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_WITH_COLLISION_SUPPORT=ON
+        cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_WITH_COLLISION_SUPPORT=ON -DPYTHON_EXECUTABLE=$(which python2)
         make
         make build_tests
         export CTEST_OUTPUT_ON_FAILURE=1
         make test
         sudo make install
+        cd ../unittest/packaging
+        mkdir build
+        cd build
+        export CMAKE_PREFIX_PATH=/usr/local
+        cmake ..
+        make
+        cd ../../../build
         sudo make uninstall

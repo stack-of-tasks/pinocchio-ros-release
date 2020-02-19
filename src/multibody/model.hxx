@@ -1,10 +1,10 @@
 //
-// Copyright (c) 2015-2019 CNRS INRIA
+// Copyright (c) 2015-2020 CNRS INRIA
 // Copyright (c) 2015 Wandercraft, 86 rue de Paris 91400 Orsay, France.
 //
 
-#ifndef __pinocchio_model_hxx__
-#define __pinocchio_model_hxx__
+#ifndef __pinocchio_multibody_model_hxx__
+#define __pinocchio_multibody_model_hxx__
 
 #include "pinocchio/spatial/fwd.hpp"
 #include "pinocchio/utils/string-generator.hpp"
@@ -229,7 +229,7 @@ namespace pinocchio
   ModelTpl<Scalar,Options,JointCollectionTpl>::
   getFrameId(const std::string & name, const FrameType & type) const
   {
-    typename container::aligned_vector<Frame>::const_iterator it
+    typename PINOCCHIO_ALIGNED_STD_VECTOR(Frame)::const_iterator it
     = std::find_if(frames.begin()
                    ,frames.end()
                    ,details::FilterFrame(name, type));
@@ -278,4 +278,4 @@ namespace pinocchio
 
 /// @endcond
 
-#endif // ifndef __pinocchio_model_hxx__
+#endif // ifndef __pinocchio_multibody_model_hxx__

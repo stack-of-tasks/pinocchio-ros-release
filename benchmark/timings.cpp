@@ -1,11 +1,12 @@
 //
-// Copyright (c) 2015-2019 CNRS INRIA
+// Copyright (c) 2015-2020 CNRS INRIA
 //
 
 #include "pinocchio/multibody/model.hpp"
 #include "pinocchio/multibody/data.hpp"
 
 #include "pinocchio/algorithm/joint-configuration.hpp"
+#include "pinocchio/algorithm/frames.hpp"
 #include "pinocchio/algorithm/crba.hpp"
 #include "pinocchio/algorithm/centroidal.hpp"
 #include "pinocchio/algorithm/aba.hpp"
@@ -203,11 +204,11 @@ int main(int argc, const char ** argv)
   
 
   pinocchio::Data data(model);
-  VectorXd qmax = Eigen::VectorXd::Ones(model.nq);
+  const VectorXd qmax = Eigen::VectorXd::Ones(model.nq);
 
-  std::vector<VectorXd> qs     (NBT);
-  std::vector<VectorXd> qdots  (NBT);
-  std::vector<VectorXd> qddots (NBT);
+  PINOCCHIO_ALIGNED_STD_VECTOR(VectorXd) qs     (NBT);
+  PINOCCHIO_ALIGNED_STD_VECTOR(VectorXd) qdots  (NBT);
+  PINOCCHIO_ALIGNED_STD_VECTOR(VectorXd) qddots (NBT);
   for(size_t i=0;i<NBT;++i)
     {
       qs[i]     = randomConfiguration(model,-qmax,qmax);
@@ -332,6 +333,24 @@ int main(int argc, const char ** argv)
     forwardKinematics(model,data,qs[_smooth],qdots[_smooth], qddots[_smooth]);
   }
   std::cout << "Second Order Kinematics = \t"; timer.toc(std::cout,NBT);
+
+  total = 0.;
+  SMOOTH(NBT)
+  {
+    forwardKinematics(model,data,qs[_smooth]);
+    timer.tic();	  
+    updateFramePlacements(model, data);
+    total += timer.toc(timer.DEFAULT_UNIT);
+  }
+  std::cout << "Update Frame Placement = \t"; timer.toc(std::cout,NBT);
+
+  
+  timer.tic();
+  SMOOTH(NBT)
+  {
+    framesForwardKinematics(model,data, qs[_smooth]);
+  }
+  std::cout << "Zero Order Frames Kinematics = \t"; timer.toc(std::cout,NBT);
   
   timer.tic();
   SMOOTH(NBT)

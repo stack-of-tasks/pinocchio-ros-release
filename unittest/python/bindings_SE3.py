@@ -2,7 +2,7 @@ import unittest
 import pinocchio as pin
 pin.switchToNumpyMatrix()
 import numpy as np
-from pinocchio.utils import eye,zero,rand,skew
+from pinocchio.utils import eye,zero,rand
 
 ones = lambda n: np.matrix(np.ones([n, 1] if isinstance(n, int) else n), np.double)
 
@@ -59,7 +59,7 @@ class TestSE3Bindings(unittest.TestCase):
         aXb = amb.action
         self.assertTrue(np.allclose(aXb[:3,:3], amb.rotation)) # top left 33 corner = rotation of amb
         self.assertTrue(np.allclose(aXb[3:,3:], amb.rotation)) # bottom right 33 corner = rotation of amb
-        tblock = skew(amb.translation)*amb.rotation
+        tblock = pin.skew(amb.translation)*amb.rotation
         self.assertTrue(np.allclose(aXb[:3,3:], tblock))       # top right 33 corner = translation + rotation
         self.assertTrue(np.allclose(aXb[3:,:3], zero([3,3])))  # bottom left 33 corner = 0
 
@@ -114,11 +114,11 @@ class TestSE3Bindings(unittest.TestCase):
 
     def test_conversions(self):
         def compute (m):
-            tq_vec = pin.se3ToXYZQUAT      (m)
-            tq_tup = pin.se3ToXYZQUATtuple (m)
-            mm_vec = pin.XYZQUATToSe3 (tq_vec)
-            mm_tup = pin.XYZQUATToSe3 (tq_tup)
-            mm_lis = pin.XYZQUATToSe3 (list(tq_tup))
+            tq_vec = pin.SE3ToXYZQUAT      (m)
+            tq_tup = pin.SE3ToXYZQUATtuple (m)
+            mm_vec = pin.XYZQUATToSE3 (tq_vec)
+            mm_tup = pin.XYZQUATToSE3 (tq_tup)
+            mm_lis = pin.XYZQUATToSE3 (list(tq_tup))
             return tq_vec, tq_tup, mm_vec, mm_tup, mm_lis
 
         m = pin.SE3.Identity()
@@ -139,6 +139,12 @@ class TestSE3Bindings(unittest.TestCase):
         self.assertTrue(np.allclose(m.homogeneous, mm_tup.homogeneous))
         self.assertTrue (mm_vec == mm_tup)
         self.assertTrue (mm_vec == mm_lis)
+
+        M = pin.SE3.Random()
+        h = np.array(M)
+
+        M_from_h = pin.SE3(h)
+        self.assertTrue(M == M_from_h)
 
 if __name__ == '__main__':
     unittest.main()
