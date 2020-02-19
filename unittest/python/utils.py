@@ -4,23 +4,17 @@ from math import sqrt
 import numpy as np
 import pinocchio as pin
 pin.switchToNumpyMatrix()
-from pinocchio.utils import cross, isapprox
+from pinocchio.utils import isapprox
 
-from test_case import TestCase
+from test_case import PinocchioTestCase as TestCase
 
 class TestUtils(TestCase):
-    def test_cross(self):
-        a = np.matrix('2. 0. 0.').T
-        b = np.matrix('0. 3. 0.').T
-        c = np.matrix('0. 0. 6.').T
-        self.assertApprox(cross(a, b), c)
-
     def test_se3ToXYZQUAT_XYZQUATToSe3(self):
         m = pin.SE3.Identity()
         m.translation = np.matrix('1. 2. 3.').T
         m.rotation = np.matrix('1. 0. 0.;0. 0. -1.;0. 1. 0.')  # rotate('x', pi / 2)
-        self.assertApprox(pin.se3ToXYZQUAT(m).T, [1., 2., 3., sqrt(2) / 2, 0, 0, sqrt(2) / 2])
-        self.assertApprox(pin.XYZQUATToSe3([1., 2., 3., sqrt(2) / 2, 0, 0, sqrt(2) / 2]), m)
+        self.assertApprox(pin.SE3ToXYZQUAT(m).T, [1., 2., 3., sqrt(2) / 2, 0, 0, sqrt(2) / 2])
+        self.assertApprox(pin.XYZQUATToSE3([1., 2., 3., sqrt(2) / 2, 0, 0, sqrt(2) / 2]), m)
 
     def test_isapprox(self):
         self.assertFalse(isapprox(1, 2))

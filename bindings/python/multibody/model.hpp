@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015-2019 CNRS INRIA
+// Copyright (c) 2015-2020 CNRS INRIA
 // Copyright (c) 2015 Wandercraft, 86 rue de Paris 91400 Orsay, France.
 //
 
@@ -7,16 +7,16 @@
 #define __pinocchio_python_model_hpp__
 
 #include "pinocchio/multibody/model.hpp"
-#include "pinocchio/bindings/python/serialization/serializable.hpp"
 #include "pinocchio/serialization/model.hpp"
 
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include <boost/python/overloads.hpp>
 #include <eigenpy/memory.hpp>
+#include <eigenpy/exception.hpp>
 
 #include "pinocchio/algorithm/check.hpp"
 #include "pinocchio/parsers/sample-models.hpp"
-#include "pinocchio/bindings/python/utils/eigen_container.hpp"
+#include "pinocchio/bindings/python/serialization/serializable.hpp"
 #include "pinocchio/bindings/python/utils/printable.hpp"
 #include "pinocchio/bindings/python/utils/copyable.hpp"
 #include "pinocchio/bindings/python/utils/pickle-map.hpp"
@@ -240,16 +240,16 @@ namespace pinocchio
         .def("getJointId",&Model::getJointId, bp::args("name"), "Return the index of a joint given by its name")
         .def("existJointName", &Model::existJointName, bp::args("name"), "Check if a joint given by its name exists")
         
-        .def("getFrameId",&Model::getFrameId,getFrameId_overload(bp::arg("name"),"Returns the index of the frame given by its name. If the frame is not in the frames vector, it returns the current size of the frames vector."))
         .def("getFrameId",&Model::getFrameId,getFrameId_overload(bp::args("name","type"),"Returns the index of the frame given by its name and its type. If the frame is not in the frames vector, it returns the current size of the frames vector."))
         
-        .def("existFrame",&Model::existFrame,existFrame_overload(bp::arg("name"),"Returns true if the frame given by its name exists inside the Model."))
         .def("existFrame",&Model::existFrame,existFrame_overload(bp::args("name","type"),"Returns true if the frame given by its name exists inside the Model with the given type."))
         
         .def("addFrame",(bool (Model::*)(const std::string &,const JointIndex, const FrameIndex, const SE3 &,const FrameType &)) &Model::addFrame,bp::args("name","parent_id","placement","type"),"Add a frame to the vector of frames. See also Frame for more details. Returns False if the frame already exists.")
         .def("addFrame",(bool (Model::*)(const Frame &)) &Model::addFrame,bp::args("frame"),"Add a frame to the vector of frames.")
         
-        .def("createData",&ModelPythonVisitor::createData)
+        .def("createData",
+             &ModelPythonVisitor::createData,
+             "Create a Data object for the given model.")
         
         .def("check",(bool (Model::*)(const Data &) const) &Model::check,bp::arg("data"),"Check consistency of data wrt model.")
         
