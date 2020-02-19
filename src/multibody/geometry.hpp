@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015-2018 CNRS
+// Copyright (c) 2015-2020 CNRS INRIA
 //
 
 #ifndef __pinocchio_multibody_geometry_hpp__
@@ -29,30 +29,18 @@ namespace pinocchio
     
     typedef SE3Tpl<Scalar,Options> SE3;
     
-    typedef container::aligned_vector<GeometryObject> GeometryObjectVector;
+    typedef ::pinocchio::GeometryObject GeometryObject;
+    typedef PINOCCHIO_ALIGNED_STD_VECTOR(GeometryObject) GeometryObjectVector;
     typedef std::vector<CollisionPair> CollisionPairVector;
     
     typedef pinocchio::GeomIndex GeomIndex;
-    
-    /// \brief The number of GeometryObjects
-    Index ngeoms;
-
-    /// \brief Vector of GeometryObjects used for collision computations
-    GeometryObjectVector geometryObjects;
-    ///
-    /// \brief Vector of collision pairs.
-    ///
-    CollisionPairVector collisionPairs;
   
     GeometryModel()
     : ngeoms(0)
     , geometryObjects()
     , collisionPairs()
-    { 
-      const std::size_t num_max_collision_pairs = (ngeoms * (ngeoms-1))/2;
-      collisionPairs.reserve(num_max_collision_pairs);
-    }
-
+    {}
+    
     ~GeometryModel() {};
     
     /**
@@ -108,8 +96,7 @@ namespace pinocchio
     ///
     /// \brief Add all possible collision pairs.
     ///
-    /// \note Collision pairs between geometries of having the same parent joint
-    ///       are not added.
+    /// \note Collision pairs between geometries having the same parent joint are not added.
     ///
     void addAllCollisionPairs();
    
@@ -122,7 +109,8 @@ namespace pinocchio
     
     ///
     /// \brief Remove all collision pairs from collisionPairs. Same as collisionPairs.clear().
-    void removeAllCollisionPairs ();
+    ///
+    void removeAllCollisionPairs();
    
     ///
     /// \brief Check if a collision pair exists in collisionPairs.
@@ -144,8 +132,40 @@ namespace pinocchio
     PairIndex findCollisionPair(const CollisionPair & pair) const;
     
 #endif // PINOCCHIO_WITH_HPP_FCL
+    
+    ///
+    /// \brief Returns true if *this and other are equal.
+    ///
+    bool operator==(const GeometryModel & other) const
+    {
+      return
+         ngeoms == other.ngeoms
+      && geometryObjects == other.geometryObjects
+      && collisionPairs == other.collisionPairs
+      ;
+    }
+    
+    ///
+    /// \brief Returns true if *this and other are not equal.
+    ///
+    bool operator!=(const GeometryModel & other) const
+    {
+      return !(*this == other);
+    }
 
-    friend std::ostream& operator<<(std::ostream & os, const GeometryModel & model_geom);
+    friend std::ostream& operator<<(std::ostream & os,
+                                    const GeometryModel & model_geom);
+    
+    /// \brief The number of GeometryObjects
+    Index ngeoms;
+
+    /// \brief Vector of GeometryObjects used for collision computations
+    GeometryObjectVector geometryObjects;
+    ///
+    /// \brief Vector of collision pairs.
+    ///
+    CollisionPairVector collisionPairs;
+    
   }; // struct GeometryModel
 
   struct GeometryData
@@ -164,7 +184,7 @@ namespace pinocchio
     /// oMg is used for pinocchio (kinematics) computation but is translated to fcl type
     /// for fcl (collision) computation. The copy is done in collisionObjects[i]->setTransform(.)
     ///
-    container::aligned_vector<SE3> oMg;
+    PINOCCHIO_ALIGNED_STD_VECTOR(SE3) oMg;
 
 #ifdef PINOCCHIO_WITH_HPP_FCL
     ///
