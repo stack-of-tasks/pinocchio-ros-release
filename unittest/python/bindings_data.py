@@ -2,7 +2,7 @@ import unittest
 import pinocchio as pin
 pin.switchToNumpyMatrix()
 
-from test_case import TestCase
+from test_case import PinocchioTestCase as TestCase
 
 class TestData(TestCase):
     def setUp(self):
@@ -18,6 +18,19 @@ class TestData(TestCase):
 
         data3 = data2.copy()
         self.assertEqual(data2.oMi[jointId], data3.oMi[jointId])
+
+    def test_pickle(self):
+        import pickle
+
+        data = self.data
+        filename = "data.pickle"
+        with open(filename, 'wb') as f:
+          pickle.dump(data,f)
+    
+        with open(filename, 'rb') as f:
+          data_copy = pickle.load(f)
+
+        self.assertTrue(data == data_copy)
 
 if __name__ == '__main__':
     unittest.main()
