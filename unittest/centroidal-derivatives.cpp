@@ -43,14 +43,14 @@ static void addJointAndBody(pinocchio::Model & model,
                          CV::Random() - CV::Constant(1),
                          CV::Random() + CV::Constant(1)
                          );
-    else
-      idx = model.addJoint(model.getJointId(parent_name),joint,
-                           placement, name + "_joint");
-      
-      model.addJointFrame(idx);
-      
-      model.appendBodyToJoint(idx,Inertia::Random(),SE3::Identity());
-      model.addBodyFrame(name + "_body", idx);
+  else
+    idx = model.addJoint(model.getJointId(parent_name),joint,
+                         placement, name + "_joint");
+  
+  model.addJointFrame(idx);
+  
+  model.appendBodyToJoint(idx,Inertia::Random(),SE3::Identity());
+  model.addBodyFrame(name + "_body", idx);
 }
 
 BOOST_AUTO_TEST_SUITE(BOOST_TEST_MODULE)
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(test_centroidal_derivatives)
   for(size_t k = 0; k < (size_t)model.njoints; ++k)
   {
     BOOST_CHECK(data.oMi[k].isApprox(data_ref.oMi[k]));
-    BOOST_CHECK(data.oYcrb[k].isApprox(data_ref.oMi[k].act(data_ref.Ycrb[k])));
+    BOOST_CHECK(data.oYcrb[k].isApprox(data_ref.oYcrb[k]));
   }
   BOOST_CHECK(dhdot_da.isApprox(data_ref.Ag));
   

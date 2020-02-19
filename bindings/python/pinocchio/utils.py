@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2019 CNRS INRIA
+# Copyright (c) 2015-2020 CNRS INRIA
 #
 
 from __future__ import print_function
@@ -10,53 +10,59 @@ import numpy as np
 import numpy.linalg as npl
 
 from . import libpinocchio_pywrap as pin
-from .rpy import matrixToRpy, npToTTuple, npToTuple, rotate, rpyToMatrix
+from .libpinocchio_pywrap.rpy import matrixToRpy, rpyToMatrix, rotate
 
 from .deprecation import deprecated
 
-eye = lambda n: np.matrix(np.eye(n), np.double)
-zero = lambda n: np.matrix(np.zeros([n, 1] if isinstance(n, int) else n), np.double)
-rand = lambda n: np.matrix(np.random.rand(n, 1) if isinstance(n, int) else np.random.rand(n[0], n[1]), np.double)
+def npToTTuple(M):
+    L = M.tolist()
+    for i in range(len(L)):
+        L[i] = tuple(L[i])
+    return tuple(L)
 
+def npToTuple(M):
+    if len(M.shape) == 1:
+        return tuple(M.tolist())
+    if M.shape[0] == 1:
+        return tuple(M.tolist()[0])
+    if M.shape[1] == 1:
+        return tuple(M.T.tolist()[0])
+    return npToTTuple(M)
 
+def eye(n):
+    res = np.eye(n)
+    if pin.getNumpyType()==np.matrix:
+        return np.matrix(res)
+    else:
+        return res
+
+def zero(n):
+    if pin.getNumpyType()==np.matrix:
+        return np.matrix(np.zeros([n, 1] if isinstance(n, int) else n))
+    else:
+        return np.zeros(n)
+
+def rand(n):
+    if pin.getNumpyType()==np.matrix:
+        return np.matrix(np.random.rand(n, 1) if isinstance(n, int) else np.random.rand(n[0], n[1]))
+    else:
+        return np.random.rand(n) if isinstance(n, int) else np.random.rand(n[0], n[1])
+
+@deprecated("Please use numpy.cross(a, b) or numpy.cross(a, b, axis=0).")
 def cross(a, b):
-    return np.matrix(np.cross(a.T, b.T).T, np.double)
+    return np.matrix(np.cross(a, b, axis=0))
 
-
+@deprecated('Now useless. You can directly have access to this function from the main scope of Pinocchio')
 def skew(p):
-    x, y, z = p
-    return np.matrix([[0, -z, y], [z, 0, -x], [-y, x, 0]], np.double)
-
+    return pin.skew(p)
 
 @deprecated('Now useless. You can directly have access to this function from the main scope of Pinocchio')
 def se3ToXYZQUAT(M):
-    return pin.se3ToXYZQUATtuple(M)
+    return pin.SE3ToXYZQUATtuple(M)
 
 @deprecated('Now useless. You can directly have access to this function from the main scope of Pinocchio')
 def XYZQUATToSe3(vec):
-    return pin.XYZQUATToSe3(vec)
-
-
-@deprecated('Now useless.')
-def XYZQUATToViewerConfiguration(xyzq):
-    '''
-    Convert the input 7D vector [X,Y,Z,x,y,z,w] to 7D vector [X,Y,Z,x,y,z,w]
-    Gepetto Viewer Corba has changed its convention for quaternions - This function is not more required.
-    See https://github.com/humanoid-path-planner/gepetto-viewer-corba/pull/58 for more details.
-    '''
-    if isinstance(xyzq, (np.matrix)):
-        return xyzq.A.squeeze().tolist()
-    return xyzq
-
-@deprecated('Now useless.')
-def ViewerConfigurationToXYZQUAT(vconf):
-    '''
-    Reverse function of XYZQUATToViewerConfiguration : convert [X,Y,Z,x,y,z,w] to [X,Y,Z,x,y,z,w]
-    Gepetto Viewer Corba has changed its convention for quaternions - This function is not more required.
-    See https://github.com/humanoid-path-planner/gepetto-viewer-corba/pull/58 for more details.
-    '''
-    return vconf
-
+    return pin.XYZQUATToSE3(vec)
 
 def isapprox(a, b, epsilon=1e-6):
     if "np" in a.__class__.__dict__:
@@ -64,6 +70,8 @@ def isapprox(a, b, epsilon=1e-6):
     if "np" in b.__class__.__dict__:
         b = b.np
     if isinstance(a, (np.ndarray, list)) and isinstance(b, (np.ndarray, list)):
+        a = np.squeeze(np.array(a))
+        b = np.squeeze(np.array(b))
         return np.allclose(a, b, epsilon)
     return abs(a - b) < epsilon
 
@@ -74,6 +82,8 @@ def mprint(M, name="ans",eps=1e-15):
     '''
     if isinstance(M, pin.SE3):
         M = M.homogeneous
+    if len(M.shape==1):
+        M = np.expand_dims(M, axis=0)
     ncol = M.shape[1]
     NC = 6
     print(name, " = ")
@@ -112,4 +122,4 @@ __all__ = ['np', 'npl', 'eye', 'zero', 'rand', 'isapprox', 'mprint',
            'npToTTuple', 'npToTuple', 'rotate',
            'rpyToMatrix', 'matrixToRpy',
            'se3ToXYZQUAT', 'XYZQUATToSe3',
-           'XYZQUATToViewerConfiguration', 'ViewerConfigurationToXYZQUAT', 'fromListToVectorOfString']
+           'fromListToVectorOfString']

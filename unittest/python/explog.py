@@ -8,7 +8,7 @@ pin.switchToNumpyMatrix()
 from pinocchio.utils import rand, zero, eye
 from pinocchio.explog import exp, log
 
-from test_case import TestCase
+from test_case import PinocchioTestCase as TestCase
 
 
 class TestExpLog(TestCase):
@@ -62,16 +62,29 @@ class TestExpLog(TestCase):
         self.assertApprox(log(42), math.log(42))
         self.assertApprox(exp(log(42)), 42)
         self.assertApprox(log(exp(42)), 42)
+
         m = rand(3)
-        self.assertTrue(np.linalg.norm(m) < np.pi) # necessary for next test
+        self.assertLess(np.linalg.norm(m), np.pi) # necessary for next test
         self.assertApprox(log(exp(m)), m)
+
+        m = np.random.rand(3)
+        self.assertLess(np.linalg.norm(m), np.pi) # necessary for next test
+        self.assertApprox(log(exp(m)), m)
+
         m = pin.SE3.Random()
         self.assertApprox(exp(log(m)), m)
+
         m = rand(6)
-        self.assertTrue(np.linalg.norm(m) < np.pi) # necessary for next test (actually, only angular part)
+        self.assertLess(np.linalg.norm(m), np.pi) # necessary for next test (actually, only angular part)
         self.assertApprox(log(exp(m)), m)
+
+        m = np.random.rand(6)
+        self.assertLess(np.linalg.norm(m), np.pi) # necessary for next test (actually, only angular part)
+        self.assertApprox(log(exp(m)), m)
+
         m = eye(4)
         self.assertApprox(exp(log(m)).homogeneous, m)
+
         with self.assertRaises(ValueError):
             exp(eye(4))
         with self.assertRaises(ValueError):

@@ -1,10 +1,10 @@
 //
-// Copyright (c) 2015-2019 CNRS INRIA
+// Copyright (c) 2015-2020 CNRS INRIA
 // Copyright (c) 2015 Wandercraft, 86 rue de Paris 91400 Orsay, France.
 //
 
-#ifndef __pinocchio_model_hpp__
-#define __pinocchio_model_hpp__
+#ifndef __pinocchio_multibody_model_hpp__
+#define __pinocchio_multibody_model_hpp__
 
 #include "pinocchio/spatial/fwd.hpp"
 #include "pinocchio/spatial/se3.hpp"
@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <map>
+#include <iterator>
 
 namespace pinocchio
 {
@@ -53,10 +54,10 @@ namespace pinocchio
     typedef JointModelTpl<Scalar,Options,JointCollectionTpl> JointModel;
     typedef JointDataTpl<Scalar,Options,JointCollectionTpl> JointData;
     
-    typedef container::aligned_vector<JointModel> JointModelVector;
-    typedef container::aligned_vector<JointData> JointDataVector;
+    typedef PINOCCHIO_ALIGNED_STD_VECTOR(JointModel) JointModelVector;
+    typedef PINOCCHIO_ALIGNED_STD_VECTOR(JointData) JointDataVector;
     
-    typedef container::aligned_vector<Frame> FrameVector;
+    typedef PINOCCHIO_ALIGNED_STD_VECTOR(Frame) FrameVector;
     
     typedef Eigen::Matrix<Scalar,Eigen::Dynamic,1,Options> VectorXs;
     typedef Eigen::Matrix<Scalar,3,1,Options> Vector3;
@@ -86,10 +87,10 @@ namespace pinocchio
     int nframes;
 
     /// \brief Spatial inertias of the body *i* expressed in the supporting joint frame *i*.
-    container::aligned_vector<Inertia> inertias;
+    PINOCCHIO_ALIGNED_STD_VECTOR(Inertia) inertias;
     
     /// \brief Placement (SE3) of the input of joint *i* regarding to the parent joint output *li*.
-    container::aligned_vector<SE3> jointPlacements;
+    PINOCCHIO_ALIGNED_STD_VECTOR(SE3) jointPlacements;
 
     /// \brief Model of joint *i*, encapsulated in a JointModelAccessor.
     JointModelVector joints;
@@ -136,12 +137,12 @@ namespace pinocchio
     /// \brief Vector of operational frames registered on the model.
     FrameVector frames;
     
-    /// \brief Vector of supports.
-    /// supports[j] corresponds to the collection of all joints located on the path between body *j*  and the world.
+    /// \brief Vector of joint supports.
+    /// supports[j] corresponds to the collection of all joints located on the path between body *j*  and the root.
     /// The last element of supports[j] is the index of the joint *j* itself.
     std::vector<IndexVector> supports;
     
-    /// \brief Vector of subtrees.
+    /// \brief Vector of joint subtrees.
     /// subtree[j] corresponds to the subtree supported by the joint *j*.
     /// The first element of subtree[j] is the index of the joint *j* itself.
     std::vector<IndexVector> subtrees;
@@ -270,8 +271,18 @@ namespace pinocchio
 
       if(other.referenceConfigurations.size() != referenceConfigurations.size())
         return false;
-      res &= other.referenceConfigurations == referenceConfigurations;
-      if(!res) return res;
+      
+      typename ConfigVectorMap::const_iterator it = referenceConfigurations.begin();
+      typename ConfigVectorMap::const_iterator it_other = other.referenceConfigurations.begin();
+      for(long k = 0; k < (long)referenceConfigurations.size(); ++k)
+      {
+        std::advance(it,k); std::advance(it_other,k);
+        
+        if(it->second.size() != it_other->second.size())
+          return false;
+        if(it->second != it_other->second)
+          return false;
+      }
 
       if(other.rotorInertia.size() != rotorInertia.size())
         return false;
@@ -546,4 +557,4 @@ namespace pinocchio
 /* --- Details -------------------------------------------------------------- */
 #include "pinocchio/multibody/model.hxx"
 
-#endif // ifndef __pinocchio_model_hpp__
+#endif // ifndef __pinocchio_multibody_model_hpp__

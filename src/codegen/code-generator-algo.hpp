@@ -25,7 +25,7 @@ namespace pinocchio
     typedef typename Base::Scalar Scalar;
     
     typedef typename Base::Model Model;
-    typedef typename Base::ADCongigVectorType ADCongigVectorType;
+    typedef typename Base::ADConfigVectorType ADConfigVectorType;
     typedef typename Base::ADTangentVectorType ADTangentVectorType;
     typedef typename Base::MatrixXs MatrixXs;
     typedef typename Base::VectorXs VectorXs;
@@ -35,7 +35,7 @@ namespace pinocchio
                 const std::string & library_name = "cg_rnea_eval")
     : Base(model,model.nq+2*model.nv,model.nv,function_name,library_name)
     {
-      ad_q = ADCongigVectorType(model.nq); ad_q = neutral(model);
+      ad_q = ADConfigVectorType(model.nq); ad_q = neutral(ad_model);
       ad_v = ADTangentVectorType(model.nv); ad_v.setZero();
       ad_a = ADTangentVectorType(model.nv); ad_a.setZero();
       x = VectorXs::Zero(Base::getInputDimension());
@@ -98,6 +98,8 @@ namespace pinocchio
       dtau_da = Base::jac.middleCols(it,ad_model.nv); it += ad_model.nv;
     }
     
+    MatrixXs dtau_dq, dtau_dv, dtau_da;
+    
   protected:
     
     using Base::ad_model;
@@ -110,9 +112,8 @@ namespace pinocchio
     
     VectorXs x;
     VectorXs res;
-    MatrixXs dtau_dq, dtau_dv, dtau_da;
     
-    ADCongigVectorType ad_q, ad_q_plus;
+    ADConfigVectorType ad_q, ad_q_plus;
     ADTangentVectorType ad_dq, ad_v, ad_a;
   };
   
@@ -123,7 +124,7 @@ namespace pinocchio
     typedef typename Base::Scalar Scalar;
     
     typedef typename Base::Model Model;
-    typedef typename Base::ADCongigVectorType ADCongigVectorType;
+    typedef typename Base::ADConfigVectorType ADConfigVectorType;
     typedef typename Base::ADTangentVectorType ADTangentVectorType;
     typedef typename Base::MatrixXs MatrixXs;
     typedef typename Base::VectorXs VectorXs;
@@ -133,7 +134,7 @@ namespace pinocchio
                const std::string & library_name = "cg_aba_eval")
     : Base(model,model.nq+2*model.nv,model.nv,function_name,library_name)
     {
-      ad_q = ADCongigVectorType(model.nq); ad_q = neutral(model);
+      ad_q = ADConfigVectorType(model.nq); ad_q = neutral(ad_model);
       ad_v = ADTangentVectorType(model.nv); ad_v.setZero();
       ad_tau = ADTangentVectorType(model.nv); ad_tau.setZero();
       x = VectorXs::Zero(Base::getInputDimension());
@@ -143,7 +144,7 @@ namespace pinocchio
       da_dv = MatrixXs::Zero(model.nv,model.nv);
       da_dtau = MatrixXs::Zero(model.nv,model.nv);
     }
-    
+
     void buildMap()
     {
       CppAD::Independent(ad_X);
@@ -196,6 +197,8 @@ namespace pinocchio
       da_dtau = Base::jac.middleCols(it,ad_model.nv); it += ad_model.nv;
     }
     
+    MatrixXs da_dq,da_dv,da_dtau;
+    
   protected:
     
     using Base::ad_model;
@@ -208,9 +211,8 @@ namespace pinocchio
     
     VectorXs x;
     VectorXs res;
-    MatrixXs da_dq,da_dv,da_dtau;
     
-    ADCongigVectorType ad_q, ad_q_plus;
+    ADConfigVectorType ad_q, ad_q_plus;
     ADTangentVectorType ad_dq, ad_v, ad_tau;
   };
   
@@ -221,7 +223,7 @@ namespace pinocchio
     typedef typename Base::Scalar Scalar;
     
     typedef typename Base::Model Model;
-    typedef typename Base::ADCongigVectorType ADCongigVectorType;
+    typedef typename Base::ADConfigVectorType ADConfigVectorType;
     typedef typename Base::ADTangentVectorType ADTangentVectorType;
     typedef typename Base::MatrixXs MatrixXs;
     typedef typename Base::VectorXs VectorXs;
@@ -231,7 +233,7 @@ namespace pinocchio
                 const std::string & library_name = "cg_crba_eval")
     : Base(model,model.nq,(model.nv*(model.nv+1))/2,function_name,library_name)
     {
-      ad_q = ADCongigVectorType(model.nq); ad_q = neutral(model);
+      ad_q = ADConfigVectorType(model.nq); ad_q = neutral(ad_model);
       x = VectorXs::Zero(Base::getInputDimension());
       res = VectorXs::Zero(Base::getOutputDimension());
       
@@ -286,6 +288,8 @@ namespace pinocchio
       assert(it_Y == Base::getOutputDimension());
     }
     
+    MatrixXs M;
+    
   protected:
     
     using Base::ad_model;
@@ -297,9 +301,8 @@ namespace pinocchio
     
     VectorXs x;
     VectorXs res;
-    MatrixXs M;
     
-    ADCongigVectorType ad_q;
+    ADConfigVectorType ad_q;
   };
   
   template<typename _Scalar>
@@ -309,7 +312,7 @@ namespace pinocchio
     typedef typename Base::Scalar Scalar;
     
     typedef typename Base::Model Model;
-    typedef typename Base::ADCongigVectorType ADCongigVectorType;
+    typedef typename Base::ADConfigVectorType ADConfigVectorType;
     typedef typename Base::ADTangentVectorType ADTangentVectorType;
     typedef typename Base::MatrixXs MatrixXs;
     typedef typename Base::VectorXs VectorXs;
@@ -319,7 +322,7 @@ namespace pinocchio
                 const std::string & library_name = "cg_minv_eval")
     : Base(model,model.nq,(model.nv*(model.nv+1))/2,function_name,library_name)
     {
-      ad_q = ADCongigVectorType(model.nq); ad_q = neutral(model);
+      ad_q = ADConfigVectorType(model.nq); ad_q = neutral(ad_model);
       x = VectorXs::Zero(Base::getInputDimension());
       res = VectorXs::Zero(Base::getOutputDimension());
       
@@ -371,6 +374,8 @@ namespace pinocchio
       }
     }
     
+    MatrixXs Minv;
+    
   protected:
     
     using Base::ad_model;
@@ -382,9 +387,8 @@ namespace pinocchio
     
     VectorXs x;
     VectorXs res;
-    MatrixXs Minv;
     
-    ADCongigVectorType ad_q;
+    ADConfigVectorType ad_q;
   };
   
   template<typename _Scalar>
@@ -394,7 +398,7 @@ namespace pinocchio
     typedef typename Base::Scalar Scalar;
     
     typedef typename Base::Model Model;
-    typedef typename Base::ADCongigVectorType ADCongigVectorType;
+    typedef typename Base::ADConfigVectorType ADConfigVectorType;
     typedef typename Base::ADTangentVectorType ADTangentVectorType;
     typedef typename Base::MatrixXs MatrixXs;
     typedef typename PINOCCHIO_EIGEN_PLAIN_ROW_MAJOR_TYPE(MatrixXs) RowMatrixXs;
@@ -409,7 +413,7 @@ namespace pinocchio
                            const std::string & library_name = "cg_partial_rnea_eval")
     : Base(model,model.nq+2*model.nv,3*model.nv*model.nv,function_name,library_name)
     {
-      ad_q = ADCongigVectorType(model.nq); ad_q = neutral(model);
+      ad_q = ADConfigVectorType(model.nq); ad_q = neutral(ad_model);
       ad_v = ADTangentVectorType(model.nv); ad_v.setZero();
       ad_a = ADTangentVectorType(model.nv); ad_a.setZero();
       
@@ -492,7 +496,7 @@ namespace pinocchio
     ADMatrixXs ad_dtau_dq, ad_dtau_dv, ad_dtau_da;
     MatrixXs dtau_dq, dtau_dv, dtau_da;
     
-    ADCongigVectorType ad_q;
+    ADConfigVectorType ad_q;
     ADTangentVectorType ad_v, ad_a;
   };
   
@@ -503,7 +507,7 @@ namespace pinocchio
     typedef typename Base::Scalar Scalar;
     
     typedef typename Base::Model Model;
-    typedef typename Base::ADCongigVectorType ADCongigVectorType;
+    typedef typename Base::ADConfigVectorType ADConfigVectorType;
     typedef typename Base::ADTangentVectorType ADTangentVectorType;
     typedef typename Base::MatrixXs MatrixXs;
     typedef typename PINOCCHIO_EIGEN_PLAIN_ROW_MAJOR_TYPE(MatrixXs) RowMatrixXs;
@@ -518,7 +522,7 @@ namespace pinocchio
                           const std::string & library_name = "cg_partial_aba_eval")
     : Base(model,model.nq+2*model.nv,3*model.nv*model.nv,function_name,library_name)
     {
-      ad_q = ADCongigVectorType(model.nq); ad_q = neutral(model);
+      ad_q = ADConfigVectorType(model.nq); ad_q = neutral(ad_model);
       ad_v = ADTangentVectorType(model.nv); ad_v.setZero();
       ad_tau = ADTangentVectorType(model.nv); ad_tau.setZero();
       
@@ -601,7 +605,7 @@ namespace pinocchio
     ADMatrixXs ad_dddq_dq, ad_dddq_dv, ad_dddq_dtau;
     MatrixXs dddq_dq, dddq_dv, dddq_dtau;
     
-    ADCongigVectorType ad_q;
+    ADConfigVectorType ad_q;
     ADTangentVectorType ad_v, ad_tau;
   };
   
