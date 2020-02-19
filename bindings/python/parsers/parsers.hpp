@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015-2019 CNRS INRIA
+// Copyright (c) 2015-2020 CNRS INRIA
 //
 
 #ifndef __pinocchio_python_parsers_hpp__
@@ -14,10 +14,6 @@
 
 #include "pinocchio/bindings/python/multibody/geometry-model.hpp"
 #include "pinocchio/bindings/python/multibody/geometry-data.hpp"
-
-#ifdef PINOCCHIO_WITH_LUA5
-  #include "pinocchio/parsers/lua.hpp"
-#endif // #ifdef PINOCCHIO_WITH_LUA5
 
 #include "pinocchio/parsers/srdf.hpp"
 
@@ -47,37 +43,43 @@ namespace pinocchio
         return model;
       }
       
-      static void buildModelFromUrdf(const std::string & filename,
-                                     Model & model)
+      static Model & buildModelFromUrdf(const std::string & filename,
+                                        Model & model)
       {
-        pinocchio::urdf::buildModel(filename, model);
+        return pinocchio::urdf::buildModel(filename, model);
       }
 
       static Model buildModelFromUrdf(const std::string & filename,
-                                      bp::object & root_joint_object
-                                      )
+                                      bp::object & root_joint_object)
       {
-        JointModelVariant root_joint = bp::extract<JointModelVariant> (root_joint_object)();
+        JointModelVariant root_joint = bp::extract<JointModelVariant>(root_joint_object)();
         Model model;
         pinocchio::urdf::buildModel(filename, root_joint, model);
         return model;
       }
       
-      static void buildModelFromUrdf(const std::string & filename,
-                                     bp::object & root_joint_object,
-                                     Model & model
-                                     )
+      static Model & buildModelFromUrdf(const std::string & filename,
+                                        bp::object & root_joint_object,
+                                        Model & model)
       {
-        JointModelVariant root_joint = bp::extract<JointModelVariant> (root_joint_object)();
-        pinocchio::urdf::buildModel(filename, root_joint, model);
+        JointModelVariant root_joint = bp::extract<JointModelVariant>(root_joint_object)();
+        return pinocchio::urdf::buildModel(filename, root_joint, model);
       }
       
       static Model buildModelFromXML(const std::string & XMLstream,
-                                     bp::object & root_joint_object
-                                     )
+                                     bp::object & root_joint_object)
       {
         JointModelVariant root_joint = bp::extract<JointModelVariant> (root_joint_object)();
         Model model;
+        pinocchio::urdf::buildModelFromXML(XMLstream, root_joint, model);
+        return model;
+      }
+      
+      static Model & buildModelFromXML(const std::string & XMLstream,
+                                     bp::object & root_joint_object,
+                                     Model & model)
+      {
+        JointModelVariant root_joint = bp::extract<JointModelVariant> (root_joint_object)();
         pinocchio::urdf::buildModelFromXML(XMLstream, root_joint, model);
         return model;
       }
@@ -88,12 +90,18 @@ namespace pinocchio
         pinocchio::urdf::buildModelFromXML(XMLstream, model);
         return model;
       }
+      
+      static Model & buildModelFromXML(const std::string & XMLstream,
+                                     Model & model)
+      {
+        pinocchio::urdf::buildModelFromXML(XMLstream, model);
+        return model;
+      }
 
       static GeometryModel
       buildGeomFromUrdf(const Model & model,
                         const std::string & filename,
-                        const GeometryType type
-                        )
+                        const GeometryType type)
       {
         GeometryModel geometry_model;
         pinocchio::urdf::buildGeom(model,filename,type,geometry_model);
@@ -101,38 +109,59 @@ namespace pinocchio
         return geometry_model;
       }
 
+      static GeometryModel &
+      buildGeomFromUrdf(const Model & model,
+                        const std::string & filename,
+                        const GeometryType type,
+                        GeometryModel & geometry_model)
+      {
+        pinocchio::urdf::buildGeom(model,filename,type,geometry_model);
+        return geometry_model;
+      }
+
       static GeometryModel
       buildGeomFromUrdf(const Model & model,
                         const std::string & filename,
-                        const std::vector<std::string> & package_dirs,
-                        const GeometryType type
-                        )
+                        const GeometryType type,
+                        const std::vector<std::string> & package_dirs)
       {
         GeometryModel geometry_model;
         pinocchio::urdf::buildGeom(model,filename,type,geometry_model,package_dirs);
         
         return geometry_model;
       }
-      
-      static GeometryModel
+
+      static GeometryModel &
       buildGeomFromUrdf(const Model & model,
                         const std::string & filename,
-                        const bp::list & package_dirs,
-                        const GeometryType type
-                        )
+                        const GeometryType type,
+                        GeometryModel & geometry_model,
+                        const std::vector<std::string> & package_dirs)
       {
-        std::vector<std::string> package_dirs_ = extractList<std::string>(package_dirs);
-        return buildGeomFromUrdf(model,filename,package_dirs_,type);
+        pinocchio::urdf::buildGeom(model,filename,type,geometry_model,package_dirs);
+        
+        return geometry_model;
       }
 
       static GeometryModel
       buildGeomFromUrdf(const Model & model,
                         const std::string & filename,
-                        const std::string & package_dir,
-                        const GeometryType type
-                        )
+                        const GeometryType type,
+                        const std::string & package_dir)
       {
         GeometryModel geometry_model;
+        pinocchio::urdf::buildGeom(model,filename,type,geometry_model,package_dir);
+
+        return geometry_model;
+      }
+
+      static GeometryModel &
+      buildGeomFromUrdf(const Model & model,
+                        const std::string & filename,
+                        const GeometryType type,
+                        GeometryModel & geometry_model,
+                        const std::string & package_dir)
+      {
         pinocchio::urdf::buildGeom(model,filename,type,geometry_model,package_dir);
 
         return geometry_model;
@@ -143,11 +172,23 @@ namespace pinocchio
       buildGeomFromUrdf(const Model & model,
                         const std::string & filename,
                         const GeometryType type,
-                        const fcl::MeshLoaderPtr& meshLoader
-                        )
+                        const fcl::MeshLoaderPtr & meshLoader)
       {
         std::vector<std::string> hints;
         GeometryModel geometry_model;
+        pinocchio::urdf::buildGeom(model,filename,type,geometry_model,hints,meshLoader);
+        
+        return geometry_model;
+      }
+      
+      static GeometryModel &
+      buildGeomFromUrdf(const Model & model,
+                        const std::string & filename,
+                        const GeometryType type,
+                        GeometryModel & geometry_model,
+                        const fcl::MeshLoaderPtr & meshLoader)
+      {
+        std::vector<std::string> hints;
         pinocchio::urdf::buildGeom(model,filename,type,geometry_model,hints,meshLoader);
         
         return geometry_model;
@@ -156,38 +197,50 @@ namespace pinocchio
       static GeometryModel
       buildGeomFromUrdf(const Model & model,
                         const std::string & filename,
-                        const std::vector<std::string> & package_dirs,
                         const GeometryType type,
-                        const fcl::MeshLoaderPtr& meshLoader
-                        )
+                        const std::vector<std::string> & package_dirs,
+                        const fcl::MeshLoaderPtr & meshLoader)
       {
         GeometryModel geometry_model;
         pinocchio::urdf::buildGeom(model,filename,type,geometry_model,package_dirs,meshLoader);
         
         return geometry_model;
       }
-      
-      static GeometryModel
+
+      static GeometryModel &
       buildGeomFromUrdf(const Model & model,
                         const std::string & filename,
-                        const bp::list & package_dirs,
                         const GeometryType type,
-                        const fcl::MeshLoaderPtr& meshLoader
-                        )
+                        GeometryModel & geometry_model,
+                        const std::vector<std::string> & package_dirs,
+                        const fcl::MeshLoaderPtr & meshLoader)
       {
-        std::vector<std::string> package_dirs_ = extractList<std::string>(package_dirs);
-        return buildGeomFromUrdf(model,filename,package_dirs_,type,meshLoader);
+        pinocchio::urdf::buildGeom(model,filename,type,geometry_model,package_dirs,meshLoader);
+        
+        return geometry_model;
       }
 
       static GeometryModel
       buildGeomFromUrdf(const Model & model,
                         const std::string & filename,
-                        const std::string & package_dir,
                         const GeometryType type,
-                        const fcl::MeshLoaderPtr& meshLoader
-                        )
+                        const std::string & package_dir,
+                        const fcl::MeshLoaderPtr & meshLoader)
       {
         GeometryModel geometry_model;
+        pinocchio::urdf::buildGeom(model,filename,type,geometry_model,package_dir,meshLoader);
+
+        return geometry_model;
+      }
+
+      static GeometryModel &
+      buildGeomFromUrdf(const Model & model,
+                        const std::string & filename,
+                        const GeometryType type,
+                        GeometryModel & geometry_model,
+                        const std::string & package_dir,
+                        const fcl::MeshLoaderPtr & meshLoader)
+      {
         pinocchio::urdf::buildGeom(model,filename,type,geometry_model,package_dir,meshLoader);
 
         return geometry_model;
@@ -200,26 +253,14 @@ namespace pinocchio
 #endif // #ifdef PINOCCHIO_WITH_HPP_FCL
 
 #endif // #ifdef PINOCCHIO_WITH_URDFDOM
-
-#ifdef PINOCCHIO_WITH_LUA5
-      static Model buildModelFromLua(const std::string & filename,
-                                     bool ff,
-                                     bool verbose
-                                     )
-      {
-        Model model;
-        model = pinocchio::lua::buildModel(filename, ff, verbose);
-        return model;
-      }
-#endif // #ifdef PINOCCHIO_WITH_LUA5
       
       BOOST_PYTHON_FUNCTION_OVERLOADS(loadReferenceConfigurations_overload,
                                       srdf::loadReferenceConfigurations,
                                       2,3)
       
-      static void loadReferenceConfigurationsFromXML (Model& model,
-          const std::string & xmlStream,
-          const bool verbose = false)
+      static void loadReferenceConfigurationsFromXML(Model& model,
+                                                     const std::string & xmlStream,
+                                                     const bool verbose = false)
       {
         std::istringstream iss (xmlStream);
         pinocchio::srdf::loadReferenceConfigurationsFromXML(model, iss, verbose);
@@ -243,119 +284,279 @@ namespace pinocchio
       
       bp::def("buildModelFromUrdf",
               static_cast <Model (*) (const std::string &, bp::object &)> (&ParsersPythonVisitor::buildModelFromUrdf),
-              bp::args("Filename (string)","Root Joint Model"),
-              "Parse the URDF file given in input and return a pinocchio model starting with the given root joint model"
+              bp::args("urdf_filename","root_joint"),
+              "Parse the URDF file given in input and return a pinocchio Model starting with the given root joint."
               );
       
       bp::def("buildModelFromUrdf",
               static_cast <Model (*) (const std::string &)> (&ParsersPythonVisitor::buildModelFromUrdf),
-              bp::args("Filename (string)"),
-              "Parse the URDF file given in input and return a pinocchio model"
+              bp::args("urdf_filename"),
+              "Parse the URDF file given in input and return a pinocchio Model."
               );
       
       bp::def("buildModelFromUrdf",
-              static_cast <void (*) (const std::string &, Model &)> (&ParsersPythonVisitor::buildModelFromUrdf),
-              bp::args("URDF filename (string)","model (class Model)"),
-              "Append to a given model a URDF structure given by its filename"
+              static_cast <Model & (*) (const std::string &, Model &)> (&ParsersPythonVisitor::buildModelFromUrdf),
+              bp::args("urdf_filename","model"),
+              "Append to a given model a URDF structure given by its filename.",
+              bp::return_internal_reference<2>()
               );
       
       bp::def("buildModelFromUrdf",
-              static_cast <void (*) (const std::string &, bp::object &, Model &)> (&ParsersPythonVisitor::buildModelFromUrdf),
-              bp::args("URDF filename (string)","model (class Model)","root_joint (class JointModel)"),
-              "Append to a given model a URDF structure given by its filename and the root joint"
+              static_cast <Model & (*) (const std::string &, bp::object &, Model &)> (&ParsersPythonVisitor::buildModelFromUrdf),
+              bp::args("urdf_filename","root_joint","model"),
+              "Append to a given model a URDF structure given by its filename and the root joint.",
+              bp::return_internal_reference<3>()
               );
       
       bp::def("buildModelFromXML",
               static_cast <Model (*) (const std::string &, bp::object &)> (&ParsersPythonVisitor::buildModelFromXML),
-              bp::args("XML stream (string)","Root Joint Model"),
-              "Parse the URDF XML stream given in input and return a pinocchio model starting with the given root joint model"
+              bp::args("urdf_xml_stream","root_joint"),
+              "Parse the URDF XML stream given in input and return a pinocchio Model starting with the given root joint."
+              );
+      
+      bp::def("buildModelFromXML",
+              static_cast <Model & (*) (const std::string &, bp::object &, Model &)> (&ParsersPythonVisitor::buildModelFromXML),
+              bp::args("urdf_xml_stream","root_joint","model"),
+              "Parse the URDF XML stream given in input and append it to the input model with the given interfacing joint.",
+              bp::return_internal_reference<3>()
               );
       
       bp::def("buildModelFromXML",
               static_cast <Model (*) (const std::string &)> (&ParsersPythonVisitor::buildModelFromXML),
-              bp::args("XML stream (string)"),
-              "Parse the URDF XML stream given in input and return a pinocchio model"
+              bp::args("urdf_xml_stream"),
+              "Parse the URDF XML stream given in input and return a pinocchio Model."
+              );
+              
+      bp::def("buildModelFromXML",
+              static_cast <Model & (*) (const std::string &, Model &)> (&ParsersPythonVisitor::buildModelFromXML),
+              bp::args("urdf_xml_stream","model"),
+              "Parse the URDF XML stream given in input and append it to the input model.",
+              bp::return_internal_reference<2>()
               );
       
       bp::def("buildGeomFromUrdf",
-              static_cast <GeometryModel (*) (const Model &, const std::string &, const std::vector<std::string> &, const GeometryType)> (&ParsersPythonVisitor::buildGeomFromUrdf),
-              bp::args("Model to associate the Geometry","URDF filename (string)", "package_dirs (vector of strings)", "Geometry type (COLLISION or VISUAL)"),
-              "Parse the URDF file given in input looking for the geometry of the given Model and return a proper pinocchio geometry model ");
+              static_cast <GeometryModel (*) (const Model &, const std::string &, const GeometryType, const std::vector<std::string> &)> (&ParsersPythonVisitor::buildGeomFromUrdf),
+              bp::args("model","urdf_filename","geom_type","package_dirs"),
+              "Parse the URDF file given as input looking for the geometry of the given input model and\n"
+              "return a GeometryModel containing either the collision geometries (GeometryType.COLLISION) or the visual geometries (GeometryType.VISUAL).\n"
+              "Parameters:\n"
+              "\tmodel: model of the robot\n"
+              "\turdf_filename: path to the URDF file containing the model of the robot\n"
+              "\tgeom_type: type of geometry to extract from the URDF file (either the VISUAL for display or the COLLISION for collision detection).\n"
+              "\tpackage_dirs: vector of paths pointing to the folders containing the model of the robot\n"
+              );
       
       bp::def("buildGeomFromUrdf",
-              static_cast <GeometryModel (*) (const Model &, const std::string &, const bp::list &, const GeometryType)> (&ParsersPythonVisitor::buildGeomFromUrdf),
-              bp::args("Model to associate the Geometry","URDF filename (string)", "package_dirs (list of strings)", "Geometry type (COLLISION or VISUAL)"),
-              "Parse the URDF file given in input looking for the geometry of the given Model and return a proper pinocchio geometry model ");
+              static_cast <GeometryModel & (*) (const Model &, const std::string &, const GeometryType, GeometryModel &, const std::vector<std::string> &)> (&ParsersPythonVisitor::buildGeomFromUrdf),
+              bp::args("model","urdf_filename","geom_type","geom_model","package_dirs"),
+              "Parse the URDF file given as input looking for the geometry of the given input model and\n"
+              "and store either the collision geometries (GeometryType.COLLISION) or the visual geometries (GeometryType.VISUAL) in the geom_model given as input.\n"
+              "Parameters:\n"
+              "\tmodel: model of the robot\n"
+              "\turdf_filename: path to the URDF file containing the model of the robot\n"
+              "\tgeom_type: type of geometry to extract from the URDF file (either the VISUAL for display or the COLLISION for collision detection).\n"
+              "\tgeom_model: reference where to store the parsed information\n"
+              "\tpackage_dirs: vector of paths pointing to the folders containing the model of the robot\n",
+              bp::return_internal_reference<4>()
+              );
       
       bp::def("buildGeomFromUrdf",
               static_cast <GeometryModel (*) (const Model &, const std::string &, const GeometryType)> (&ParsersPythonVisitor::buildGeomFromUrdf),
-              bp::args("Model to associate the Geometry","URDF filename (string)","Geometry type (COLLISION or VISUAL)"),
-              "Parse the URDF file given in input looking for the geometry of the given Model and return a proper pinocchio  geometry model ");
-
-      bp::def("buildGeomFromUrdf",
-              static_cast <GeometryModel (*) (const Model &, const std::string &, const std::string &, const GeometryType)> (&ParsersPythonVisitor::buildGeomFromUrdf),
-              bp::args("Model to associate the Geometry","URDF filename (string)", "package_dir (string)","Geometry type (COLLISION or VISUAL)"),
-              "Parse the URDF file given in input looking for the geometry of the given Model and return a proper pinocchio  geometry model ");
-
-#ifdef PINOCCHIO_WITH_HPP_FCL
-
-      bp::def("buildGeomFromUrdf",
-              static_cast <GeometryModel (*) (const Model &, const std::string &, const std::vector<std::string> &, const GeometryType, const fcl::MeshLoaderPtr&)> (&ParsersPythonVisitor::buildGeomFromUrdf),
-              bp::args("Model to associate the Geometry","URDF filename (string)", "package_dirs (vector of strings)","Geometry type (COLLISION or VISUAL)", "Mesh loader"),
-              "Parse the URDF file given in input looking for the geometry of the given Model and return a proper pinocchio geometry model ");
+              bp::args("model","urdf_filename","geom_type"),
+              "Parse the URDF file given as input looking for the geometry of the given input model and\n"
+              "return a GeometryModel containing either the collision geometries (GeometryType.COLLISION) or the visual geometries (GeometryType.VISUAL).\n"
+              "Parameters:\n"
+              "\tmodel: model of the robot\n"
+              "\turdf_filename: path to the URDF file containing the model of the robot\n"
+              "\tgeom_type: type of geometry to extract from the URDF file (either the VISUAL for display or the COLLISION for collision detection).\n"
+              "Note:\n"
+              "This function does not take any hint concerning the location of the meshes of the robot."
+              );
       
       bp::def("buildGeomFromUrdf",
-              static_cast <GeometryModel (*) (const Model &, const std::string &, const bp::list &, const GeometryType, const fcl::MeshLoaderPtr&)> (&ParsersPythonVisitor::buildGeomFromUrdf),
-              bp::args("Model to associate the Geometry","URDF filename (string)", "package_dirs (list of strings)","Geometry type (COLLISION or VISUAL)", "Mesh loader"),
-              "Parse the URDF file given in input looking for the geometry of the given Model and return a proper pinocchio geometry model ");
+              static_cast <GeometryModel & (*) (const Model &, const std::string &, const GeometryType, GeometryModel &)> (&ParsersPythonVisitor::buildGeomFromUrdf),
+              bp::args("model","urdf_filename","geom_type","geom_model"),
+              "Parse the URDF file given as input looking for the geometry of the given input model and\n"
+              "and store either the collision geometries (GeometryType.COLLISION) or the visual geometries (GeometryType.VISUAL) in the geom_model given as input.\n"
+              "Parameters:\n"
+              "\tmodel: model of the robot\n"
+              "\turdf_filename: path to the URDF file containing the model of the robot\n"
+              "\tgeom_type: type of geometry to extract from the URDF file (either the VISUAL for display or the COLLISION for collision detection).\n"
+              "\tgeom_model: reference where to store the parsed information\n"
+              "Note:\n"
+              "This function does not take any hint concerning the location of the meshes of the robot.",
+              bp::return_internal_reference<4>()
+              );
 
       bp::def("buildGeomFromUrdf",
-              static_cast <GeometryModel (*) (const Model &, const std::string &, const std::string &, const GeometryType, const fcl::MeshLoaderPtr&)> (&ParsersPythonVisitor::buildGeomFromUrdf),
-              bp::args("Model to associate the Geometry","URDF filename (string)", "package_dir (string)","Geometry type (COLLISION or VISUAL)", "Mesh loader"),
-              "Parse the URDF file given in input looking for the geometry of the given Model and return a proper pinocchio geometry model ");
+              static_cast <GeometryModel (*) (const Model &, const std::string &, const GeometryType, const std::string &)> (&ParsersPythonVisitor::buildGeomFromUrdf),
+              bp::args("model","urdf_filename","geom_type","package_dir"  ),
+              "Parse the URDF file given as input looking for the geometry of the given input model and\n"
+              "return a GeometryModel containing either the collision geometries (GeometryType.COLLISION) or the visual geometries (GeometryType.VISUAL).\n"
+              "Parameters:\n"
+              "\tmodel: model of the robot\n"
+              "\turdf_filename: path to the URDF file containing the model of the robot\n"
+              "\tgeom_type: type of geometry to extract from the URDF file (either the VISUAL for display or the COLLISION for collision detection).\n"
+              "\tpackage_dir: path pointing to the folder containing the meshes of the robot\n"
+              );
 
+      bp::def("buildGeomFromUrdf",
+              static_cast <GeometryModel & (*) (const Model &, const std::string &, const GeometryType, GeometryModel &, const std::string &)> (&ParsersPythonVisitor::buildGeomFromUrdf),
+              bp::args("model","urdf_filename","geom_type","geom_model","package_dir"),
+              "Parse the URDF file given as input looking for the geometry of the given input model and\n"
+              "and store either the collision geometries (GeometryType.COLLISION) or the visual geometries (GeometryType.VISUAL) in the geom_model given as input.\n"
+              "Parameters:\n"
+              "\tmodel: model of the robot\n"
+              "\turdf_filename: path to the URDF file containing the model of the robot\n"
+              "\tgeom_type: type of geometry to extract from the URDF file (either the VISUAL for display or the COLLISION for collision detection).\n"
+              "\tgeom_model: reference where to store the parsed information\n"
+              "\tpackage_dir: path pointing to the folder containing the meshes of the robot\n",
+              bp::return_internal_reference<4>()
+              );
+
+#ifdef PINOCCHIO_WITH_HPP_FCL
+      
+      bp::def("buildGeomFromUrdf",
+              static_cast <GeometryModel (*) (const Model &, const std::string &, const GeometryType, const std::vector<std::string> &, const fcl::MeshLoaderPtr&)> (&ParsersPythonVisitor::buildGeomFromUrdf),
+              bp::args("model","urdf_filename","geom_type","package_dirs","mesh_loader"),
+              "Parse the URDF file given as input looking for the geometry of the given input model and\n"
+              "return a GeometryModel containing either the collision geometries (GeometryType.COLLISION) or the visual geometries (GeometryType.VISUAL).\n"
+              "Parameters:\n"
+              "\tmodel: model of the robot\n"
+              "\turdf_filename: path to the URDF file containing the model of the robot\n"
+              "\tgeom_type: type of geometry to extract from the URDF file (either the VISUAL for display or the COLLISION for collision detection).\n"
+              "\tpackage_dirs: vector of paths pointing to the folders containing the model of the robot\n"
+              "\tmesh_loader: an hpp-fcl mesh loader (to load only once the related geometries)."
+              );
+      
+      bp::def("buildGeomFromUrdf",
+              static_cast <GeometryModel & (*) (const Model &, const std::string &, const GeometryType, GeometryModel &, const std::vector<std::string> &, const fcl::MeshLoaderPtr&)> (&ParsersPythonVisitor::buildGeomFromUrdf),
+              bp::args("model","urdf_filename","geom_type","geom_model","package_dirs","mesh_loader"),
+              "Parse the URDF file given as input looking for the geometry of the given input model and\n"
+              "and store either the collision geometries (GeometryType.COLLISION) or the visual geometries (GeometryType.VISUAL) in the geom_model given as input.\n"
+              "Parameters:\n"
+              "\tmodel: model of the robot\n"
+              "\turdf_filename: path to the URDF file containing the model of the robot\n"
+              "\tgeom_type: type of geometry to extract from the URDF file (either the VISUAL for display or the COLLISION for collision detection).\n"
+              "\tgeom_model: reference where to store the parsed information\n"
+              "\tpackage_dirs: vector of paths pointing to the folders containing the model of the robot\n"
+              "\tmesh_loader: an hpp-fcl mesh loader (to load only once the related geometries).",
+              bp::return_internal_reference<4>()
+              );
+
+      bp::def("buildGeomFromUrdf",
+              static_cast <GeometryModel (*) (const Model &, const std::string &, const GeometryType, const std::string &, const fcl::MeshLoaderPtr&)> (&ParsersPythonVisitor::buildGeomFromUrdf),
+              bp::args("model","urdf_filename","geom_type","package_dir","mesh_loader"),
+              "Parse the URDF file given as input looking for the geometry of the given input model and\n"
+              "return a GeometryModel containing either the collision geometries (GeometryType.COLLISION) or the visual geometries (GeometryType.VISUAL).\n"
+              "Parameters:\n"
+              "\tmodel: model of the robot\n"
+              "\turdf_filename: path to the URDF file containing the model of the robot\n"
+              "\tgeom_type: type of geometry to extract from the URDF file (either the VISUAL for display or the COLLISION for collision detection).\n"
+              "\tpackage_dir: path pointing to the folder containing the meshes of the robot\n"
+              "\tmesh_loader: an hpp-fcl mesh loader (to load only once the related geometries)."
+              );
+
+      bp::def("buildGeomFromUrdf",
+              static_cast <GeometryModel & (*) (const Model &, const std::string &, const GeometryType, GeometryModel &, const std::string &, const fcl::MeshLoaderPtr&)> (&ParsersPythonVisitor::buildGeomFromUrdf),
+              bp::args("model","urdf_filename","geom_type","geom_model","package_dir","mesh_loader"),
+              "Parse the URDF file given as input looking for the geometry of the given input model and\n"
+              "and store either the collision geometries (GeometryType.COLLISION) or the visual geometries (GeometryType.VISUAL) in the geom_model given as input.\n"
+              "Parameters:\n"
+              "\tmodel: model of the robot\n"
+              "\turdf_filename: path to the URDF file containing the model of the robot\n"
+              "\tgeom_type: type of geometry to extract from the URDF file (either the VISUAL for display or the COLLISION for collision detection).\n"
+              "\tgeom_model: reference where to store the parsed information\n"
+              "\tpackage_dir: path pointing to the folder containing the meshes of the robot\n"
+              "\tmesh_loader: an hpp-fcl mesh loader (to load only once the related geometries).",
+              bp::return_internal_reference<4>()
+              );
+      
       bp::def("buildGeomFromUrdf",
               static_cast <GeometryModel (*) (const Model &, const std::string &, const GeometryType, const fcl::MeshLoaderPtr&)> (&ParsersPythonVisitor::buildGeomFromUrdf),
-              bp::args("Model to associate the Geometry","URDF filename (string)","Geometry type (COLLISION or VISUAL)", "Mesh loader"),
-              "Parse the URDF file given in input looking for the geometry of the given Model and return a proper pinocchio  geometry model ");
+              bp::args("model","urdf_filename","geom_type","mesh_loader"),
+              "Parse the URDF file given as input looking for the geometry of the given input model and\n"
+              "return a GeometryModel containing either the collision geometries (GeometryType.COLLISION) or the visual geometries (GeometryType.VISUAL).\n"
+              "Parameters:\n"
+              "\tmodel: model of the robot\n"
+              "\turdf_filename: path to the URDF file containing the model of the robot\n"
+              "\tgeom_type: type of geometry to extract from the URDF file (either the VISUAL for display or the COLLISION for collision detection).\n"
+              "\tmesh_loader: an hpp-fcl mesh loader (to load only once the related geometries).\n"
+              "Note:\n"
+              "This function does not take any hint concerning the location of the meshes of the robot."
+              );
+      
+      bp::def("buildGeomFromUrdf",
+              static_cast <GeometryModel & (*) (const Model &, const std::string &, const GeometryType, GeometryModel &, const fcl::MeshLoaderPtr&)> (&ParsersPythonVisitor::buildGeomFromUrdf),
+              bp::args("model","urdf_filename","geom_type","geom_model","mesh_loader"),
+              "Parse the URDF file given as input looking for the geometry of the given input model and\n"
+              "and store either the collision geometries (GeometryType.COLLISION) or the visual geometries (GeometryType.VISUAL) in the geom_model given as input.\n"
+              "Parameters:\n"
+              "\tmodel: model of the robot\n"
+              "\turdf_filename: path to the URDF file containing the model of the robot\n"
+              "\tgeom_type: type of geometry to extract from the URDF file (either the VISUAL for display or the COLLISION for collision detection).\n"
+              "\tgeom_model: reference where to store the parsed information\n"
+              "\tmesh_loader: an hpp-fcl mesh loader (to load only once the related geometries).\n"
+              "Note:\n"
+              "This function does not take any hint concerning the location of the meshes of the robot.",
+              bp::return_internal_reference<4>()
+              );
       
       bp::def("removeCollisionPairs",
               static_cast<void (*)(const Model &, GeometryModel &, const std::string &, const bool)>(&srdf::removeCollisionPairs),
-              removeCollisionPairs_overload(bp::args("Model", "GeometryModel (where pairs are removed)","SRDF filename (string)", "verbosity"),
-              "Parse an SRDF file in order to desactivte collision pairs for a specific GeometryModel."));
+              removeCollisionPairs_overload(bp::args("model", "geom_model","srdf_filename", "verbose"),
+                                            "Parse an SRDF file in order to remove some collision pairs for a specific GeometryModel.\n""Parameters:\n"
+                                            "Parameters:\n"
+                                            "\tmodel: model of the robot\n"
+                                            "\tgeom_model: geometry model of the robot\n"
+                                            "\tsrdf_filename: path to the SRDF file containing the collision pairs to remove\n"
+                                            "\tverbose: [optional] display to the current terminal some internal information"
+                                            ));
       
       bp::def("removeCollisionPairsFromXML",
               static_cast<void (*)(const Model &, GeometryModel &, const std::string &, const bool)>(&srdf::removeCollisionPairsFromXML),
-              bp::args("Model", "GeometryModel (where pairs are removed)","string containing the XML-SRDF", "verbosity"),
-              "Parse an SRDF file in order to desactivte collision pairs for a specific GeometryModel.");
+              removeCollisionPairs_overload(bp::args("model", "geom_model","srdf_xml_stream", "verbose"),
+                                            "Parse an SRDF file in order to remove some collision pairs for a specific GeometryModel.\n""Parameters:\n"
+                                            "Parameters:\n"
+                                            "\tmodel: model of the robot\n"
+                                            "\tgeom_model: geometry model of the robot\n"
+                                            "\tsrdf_xml_stream: XML stream containing the SRDF information with the collision pairs to remove\n"
+                                            "\tverbose: [optional] display to the current terminal some internal information"
+                                            ));
 
 #endif // #ifdef PINOCCHIO_WITH_HPP_FCL
 #endif // #ifdef PINOCCHIO_WITH_URDFDOM
-      
-#ifdef PINOCCHIO_WITH_LUA5
-      bp::def("buildModelFromLua",buildModelFromLua,
-              bp::args("Filename (string)",
-                       "Free flyer (bool, false for a fixed robot)",
-                       "Verbose option "),
-              "Parse the URDF file given in input and return a proper pinocchio model");
-#endif // #ifdef PINOCCHIO_WITH_LUA5
 
       bp::def("loadReferenceConfigurations",
               static_cast<void (*)(Model &, const std::string &, const bool)>(&srdf::loadReferenceConfigurations),
-              loadReferenceConfigurations_overload(bp::args("Model for which we want the neutral config","srdf filename (string)", "verbosity"),
-              "Get the reference configurations of a given model from the SRDF file."));
+              loadReferenceConfigurations_overload(bp::args("model","srdf_filename","verbose"),
+                                                   "Retrieve all the reference configurations of a given model from the SRDF file.\n"
+                                                   "Parameters:\n"
+                                                   "\tmodel: model of the robot\n"
+                                                   "\tsrdf_filename: path to the SRDF file containing the reference configurations\n"
+                                                   "\tverbose: [optional] display to the current terminal some internal information"
+                                                   ));
 
       bp::def("loadReferenceConfigurationsFromXML",
               static_cast<void (*)(Model &, const std::string &, const bool)>(&srdf::loadReferenceConfigurations),
-              loadReferenceConfigurationsFromXML_overload(bp::args("Model for which we want the neutral config","srdf as XML string (string)", "verbosity"),
-              "Get the reference configurations of a given model from the SRDF string."));
+              loadReferenceConfigurationsFromXML_overload(bp::args("model","srdf_xml_stream","verbose"),
+                                                          "Retrieve all the reference configurations of a given model from the SRDF file.\n"
+                                                          "Parameters:\n"
+                                                          "\tmodel: model of the robot\n"
+                                                          "\tsrdf_xml_stream: XML stream containing the SRDF information with the reference configurations\n"
+                                                          "\tverbose: [optional] display to the current terminal some internal information"
+                                                          ));
      
       bp::def("loadRotorParameters",
               static_cast<bool (*)(Model &, const std::string &, const bool)>(&srdf::loadRotorParameters),
-              loadRotorParameters_overload(bp::args("Model for which we are loading the rotor parameters",
-                       "SRDF filename (string)", "verbosity"),
-              "Load the rotor parameters of a given model from an SRDF file.\n"
-              "Results are stored in model.rotorInertia and model.rotorGearRatio."));
+              loadRotorParameters_overload(bp::args("model","srdf_filename","verbose"),
+                                           "Load the rotor parameters of a given model from a SRDF file.\n"
+                                           "Results are stored in model.rotorInertia and model.rotorGearRatio."
+                                           "Parameters:\n"
+                                           "\tmodel: model of the robot\n"
+                                           "\tsrdf_filename: path to the SRDF file containing the rotor parameters\n"
+                                           "\tverbose: [optional] display to the current terminal some internal information"
+                                           ));
     }
     
   }

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015-2019 CNRS INRIA
+// Copyright (c) 2015-2020 CNRS INRIA
 //
 
 #include <iostream>
@@ -306,19 +306,19 @@ BOOST_AUTO_TEST_CASE (test_motion_ref)
 BOOST_AUTO_TEST_CASE(test_motion_zero)
 {
   using namespace pinocchio;
-  Motion v((BiasZero()));
+  Motion v((MotionZero()));
   
   BOOST_CHECK(v.toVector().isZero());
-  BOOST_CHECK(BiasZero() == Motion::Zero());
+  BOOST_CHECK(MotionZero() == Motion::Zero());
   
   // SE3.act
   SE3 m(SE3::Random());
-  BOOST_CHECK(m.act(BiasZero()) == Motion::Zero());
-  BOOST_CHECK(m.actInv(BiasZero()) == Motion::Zero());
+  BOOST_CHECK(m.act(MotionZero()) == Motion::Zero());
+  BOOST_CHECK(m.actInv(MotionZero()) == Motion::Zero());
   
   // Motion.cross
   Motion v2(Motion::Random());
-  BOOST_CHECK(v2.cross(BiasZero()) == Motion::Zero());
+  BOOST_CHECK(v2.cross(MotionZero()) == Motion::Zero());
 }
 
 BOOST_AUTO_TEST_CASE ( test_Force )
@@ -659,6 +659,9 @@ BOOST_AUTO_TEST_CASE ( test_Inertia )
     BOOST_CHECK(I2.isApprox(I));
 
   }
+  
+  // Test disp
+  std::cout << aI << std::endl;
 
 }
 
