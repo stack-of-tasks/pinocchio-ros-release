@@ -1,29 +1,12 @@
 #
-# Copyright (c) 2015-2019 CNRS INRIA
+# Copyright (c) 2015-2020 CNRS INRIA
 #
 
-SET(${PROJECT_NAME}_EXAMPLES
-  overview-simple
-  overview-lie
-  overview-SE3
-  overview-urdf
-  interpolation-SE3
-  build-reduced-model
-  )
-
-ADD_DEFINITIONS(-DPINOCCHIO_MODEL_DIR="${PINOCCHIO_MODEL_DIR}")
-
-IF(EIGEN3_VERSION VERSION_GREATER 3.2.90)
-  SET(${PROJECT_NAME}_EXAMPLES
-    ${${PROJECT_NAME}_EXAMPLES}
-    i-inverse-kinematics
-    )
-ENDIF(EIGEN3_VERSION VERSION_GREATER 3.2.90)
-
-FOREACH(EXAMPLE ${${PROJECT_NAME}_EXAMPLES})
-  SET(EXAMPLE_NAME "example-${EXAMPLE}")
+FUNCTION(ADD_PINOCCHIO_CPP_EXAMPLE EXAMPLE)
+  GET_FILENAME_COMPONENT(EXAMPLE_NAME ${EXAMPLE} NAME)
+  SET(EXAMPLE_NAME "example-cpp-${EXAMPLE_NAME}")
   ADD_UNIT_TEST(${EXAMPLE_NAME} ${EXAMPLE})
-  TARGET_LINK_LIBRARIES(${EXAMPLE_NAME} ${PROJECT_NAME})
+  TARGET_LINK_LIBRARIES(${EXAMPLE_NAME} PUBLIC ${PROJECT_NAME})
   PKG_CONFIG_USE_DEPENDENCY(${EXAMPLE_NAME} eigen3)
   IF(URDFDOM_FOUND)
     PKG_CONFIG_USE_DEPENDENCY(${EXAMPLE_NAME} urdfdom)
@@ -34,16 +17,61 @@ FOREACH(EXAMPLE ${${PROJECT_NAME}_EXAMPLES})
   IF(CPPAD_FOUND)
     PKG_CONFIG_USE_DEPENDENCY(${EXAMPLE_NAME} "cppad")
   ENDIF(CPPAD_FOUND)
+ENDFUNCTION()
+
+SET(${PROJECT_NAME}_EXAMPLES
+  inverse-kinematics
+  overview-simple
+  overview-lie
+  overview-SE3
+  overview-urdf
+  interpolation-SE3
+  build-reduced-model
+  geometry-models
+  kinematics-derivatives
+  forward-dynamics-derivatives
+  inverse-dynamics-derivatives
+  multiprecision
+  )
+
+IF(HPP_FCL_FOUND)
+  LIST(APPEND ${PROJECT_NAME}_EXAMPLES
+    collisions
+    )
+ENDIF(HPP_FCL_FOUND)
+
+ADD_DEFINITIONS(-DPINOCCHIO_MODEL_DIR="${PINOCCHIO_MODEL_DIR}")
+
+FOREACH(EXAMPLE ${${PROJECT_NAME}_EXAMPLES})
+  ADD_PINOCCHIO_CPP_EXAMPLE(${EXAMPLE})
 ENDFOREACH(EXAMPLE ${${PROJECT_NAME}_EXAMPLES})
 
 IF(BUILD_PYTHON_INTERFACE)
   SET(${PROJECT_NAME}_PYTHON_EXAMPLES
-    i-inverse-kinematics
+    inverse-kinematics
     overview-simple
-    #overview-urdf
+    overview-urdf
+    kinematics-derivatives
+    forward-dynamics-derivatives
+    inverse-dynamics-derivatives
+    gepetto-viewer
+    meshcat-viewer
+    meshcat-viewer-dae
+    robot-wrapper-viewer
+    geometry-models
     )
 
+  IF(HPP_FCL_FOUND)
+    LIST(APPEND ${PROJECT_NAME}_PYTHON_EXAMPLES 
+      collisions
+      sample-model-viewer
+      display-shapes
+      )
+  ENDIF(HPP_FCL_FOUND)
+
   FOREACH(EXAMPLE ${${PROJECT_NAME}_PYTHON_EXAMPLES})
-    ADD_PYTHON_UNIT_TEST("py-example-${EXAMPLE}" "examples/${EXAMPLE}.py" "bindings/python")
+    ADD_PYTHON_UNIT_TEST("example-py-${EXAMPLE}" "examples/${EXAMPLE}.py" "bindings/python")
   ENDFOREACH(EXAMPLE ${${PROJECT_NAME}_PYTHON_EXAMPLES})
 ENDIF(BUILD_PYTHON_INTERFACE)
+
+ADD_SUBDIRECTORY(codegen)

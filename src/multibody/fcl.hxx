@@ -1,9 +1,9 @@
 //
-// Copyright (c) 2015-2016 CNRS
+// Copyright (c) 2015-2019 CNRS INRIA
 //
 
-#ifndef __pinocchio_fcl_hxx__
-#define __pinocchio_fcl_hxx__
+#ifndef __pinocchio_multibody_fcl_hxx__
+#define __pinocchio_multibody_fcl_hxx__
 
 #include <ostream>
 
@@ -12,18 +12,18 @@ namespace pinocchio
 
   ///
   /// \brief Default constructor of a collision pair from two collision object indexes.
-  ///        The indexes must be ordered such that co1 < co2. If not, the constructor reverts the indexes.
+  /// \remarks The two indexes must be different, otherwise the constructor throws.
   ///
-  /// \param[in] co1 Index of the first collision object
-  /// \param[in] co2 Index of the second collision object
+  /// \param[in] co1 Index of the first collision object.
+  /// \param[in] co2 Index of the second collision object.
   ///
   inline CollisionPair::CollisionPair(const GeomIndex co1, const GeomIndex co2) 
-    : Base(co1,co2)
+  : Base(co1,co2)
   {
-    assert(co1 != co2 && "The index of collision objects must not be equal.");
+    PINOCCHIO_CHECK_INPUT_ARGUMENT(co1 != co2,"The index of collision objects must not be equal.");
   }
 
-  inline bool CollisionPair::operator== (const CollisionPair& rhs) const
+  inline bool CollisionPair::operator==(const CollisionPair& rhs) const
   {
     return (first == rhs.first  && second == rhs.second)
       ||   (first == rhs.second && second == rhs.first );
@@ -40,7 +40,7 @@ namespace pinocchio
 
 #ifdef PINOCCHIO_WITH_HPP_FCL  
 
-  inline bool operator == (const fcl::CollisionObject & lhs, const fcl::CollisionObject & rhs)
+  inline bool operator==(const fcl::CollisionObject & lhs, const fcl::CollisionObject & rhs)
   {
     return lhs.collisionGeometry() == rhs.collisionGeometry()
             && lhs.getAABB().min_ == rhs.getAABB().min_
@@ -48,17 +48,22 @@ namespace pinocchio
   }
   
 #endif // PINOCCHIO_WITH_HPP_FCL
-  
+
   inline bool operator==(const GeometryObject & lhs, const GeometryObject & rhs)
   {
-    return ( lhs.name           == rhs.name
+    return (   lhs.name         == rhs.name
             && lhs.parentFrame  == rhs.parentFrame
             && lhs.parentJoint  == rhs.parentJoint
-            && lhs.fcl          == rhs.fcl
+            && lhs.geometry     == rhs.geometry
             && lhs.placement    == rhs.placement
             && lhs.meshPath     == rhs.meshPath
             && lhs.meshScale    == rhs.meshScale
             );
+  }
+
+  inline bool operator!=(const GeometryObject & lhs, const GeometryObject & rhs)
+  {
+    return !(lhs == rhs);
   }
 
   inline std::ostream & operator<< (std::ostream & os, const GeometryObject & geom_object)
@@ -77,4 +82,4 @@ namespace pinocchio
 } // namespace pinocchio
 
 
-#endif // ifndef __pinocchio_fcl_hxx__
+#endif // ifndef __pinocchio_multibody_fcl_hxx__

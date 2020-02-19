@@ -85,3 +85,70 @@ def computeCentroidalDynamics(model, data, q, v, a = None):
     return pin.computeCentroidalMomentum(model,data,q,v,a)
 
 computeCentroidalDynamics.__doc__ = ( "This function has been renamed computeCentroidalMomentum or computeCentroidalMomentumTimeVariation to either only compute the centroidal momentum quantity or also its time derivative respectively." )
+
+class GeometryObject(pin.GeometryObject):
+    @property
+    @deprecated("The fcl property has been renamed geometry. Please use GeometryObject.geometry instead")
+    def fcl(self):
+       return self.geometry
+
+@deprecated("This function is now called SE3ToXYZQUATtuple. Please change for this new signature to delete this warning.")
+def se3ToXYZQUATtuple(M):
+    return pin.SE3ToXYZQUATtuple(M)
+
+@deprecated("This function is now called SE3ToXYZQUAT. Please change for this new signature to delete this warning.")
+def se3ToXYZQUAT(M):
+    return pin.SE3ToXYZQUAT(M)
+
+@deprecated("This function is now called XYZQUATToSE3. Please change for this new signature to delete this warning.")
+def XYZQUATToSe3(x):
+    return pin.XYZQUATToSE3(x)
+
+def buildGeomFromUrdf(model, filename, *args):
+
+  arg3 = args[0]
+  if isinstance(arg3,(str,list,pin.StdVec_StdString)):
+    package_dir = arg3
+    geom_type = args[1]
+
+    if len(args) >= 3:
+      mesh_loader = args[2]
+      message = ("This function signature is now deprecated and will be removed in future releases of Pinocchio. "
+                 "Please change for the new signature buildGeomFromUrdf(model,filename,type,package_dirs,mesh_loader).")
+      _warnings.warn(message, category=DeprecatedWarning, stacklevel=2)
+      return pin.buildGeomFromUrdf(model,filename,geom_type,package_dir,mesh_loader)
+    else:
+      message = ("This function signature is now deprecated and will be removed in future releases of Pinocchio. "
+                 "Please change for the new signature buildGeomFromUrdf(model,filename,type,package_dirs).")
+      _warnings.warn(message, category=DeprecatedWarning, stacklevel=2)
+      return pin.buildGeomFromUrdf(model,filename,geom_type,package_dir)
+  else:
+    return pin.buildGeomFromUrdf(model, filename, *args)
+    
+buildGeomFromUrdf.__doc__ = (
+  pin.buildGeomFromUrdf.__doc__
+) 
+
+@deprecated("This function is now deprecated and will be removed in future releases of Pinocchio. "
+            "Please change for the new function computePotentialEnergy.")
+def potentialEnergy(model,data,q,update_kinematics=True):
+  if update_kinematics:
+    return pin.computePotentialEnergy(model,data,q)
+  else:
+    return pin.computePotentialEnergy(model,data)
+
+potentialEnergy.__doc__ += '\n' + pin.computePotentialEnergy.__doc__
+
+@deprecated("This function is now deprecated and will be removed in future releases of Pinocchio. "
+            "Please change for the new function computeKineticEnergy.")
+def kineticEnergy(model,data,q,v,update_kinematics=True):
+  if update_kinematics:
+    return pin.computeKineticEnergy(model,data,q,v)
+  else:
+    return pin.computeKineticEnergy(model,data)
+
+kineticEnergy.__doc__ += '\n' + pin.computeKineticEnergy.__doc__
+
+from .utils import npToTTuple, npToTuple
+pin.rpy.npToTTuple = deprecated("This function was moved to the utils submodule.")(npToTTuple)
+pin.rpy.npToTuple = deprecated("This function was moved to the utils submodule.")(npToTuple)
