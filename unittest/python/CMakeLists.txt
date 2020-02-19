@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2015-2020 CNRS INRIA
+#
+
 SET(${PROJECT_NAME}_PYTHON_TESTS
   bindings
   bindings_model
@@ -9,12 +13,13 @@ SET(${PROJECT_NAME}_PYTHON_TESTS
   bindings_force
   bindings_frame
   bindings_inertia
+  bindings_spatial
   bindings_joint_composite
   bindings_motion
   bindings_SE3
   bindings_geometry_model
+  bindings_rnea
   explog
-  model
   rpy
   utils
   serialization
@@ -24,18 +29,20 @@ IF(HPP_FCL_FOUND)
   SET(${PROJECT_NAME}_PYTHON_TESTS
     ${${PROJECT_NAME}_PYTHON_TESTS}
     bindings_geometry_object
+    bindings_fcl_transform
     )
 ENDIF(HPP_FCL_FOUND)
 
 IF(URDFDOM_FOUND)
   SET(${PROJECT_NAME}_PYTHON_TESTS
     ${${PROJECT_NAME}_PYTHON_TESTS}
-    bindings_geometry_object_urdf
+    bindings_urdf
+    bindings_geometry_model_urdf
     )
 ENDIF(URDFDOM_FOUND)
 
 FOREACH(TEST ${${PROJECT_NAME}_PYTHON_TESTS})
-  ADD_PYTHON_UNIT_TEST("py-${TEST}" "unittest/python/${TEST}.py" "bindings/python")
+  ADD_PYTHON_UNIT_TEST("test-py-${TEST}" "unittest/python/${TEST}.py" "bindings/python")
 ENDFOREACH(TEST ${${PROJECT_NAME}_PYTHON_TESTS})
 
 MAKE_DIRECTORY("${CMAKE_CURRENT_BINARY_DIR}/serialization-data")
