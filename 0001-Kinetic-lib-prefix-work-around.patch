@@ -1,4 +1,4 @@
-From 49d7f51c4db75daca9aabadcbb5a8404befef495 Mon Sep 17 00:00:00 2001
+From f67948faa83b2a1883fdacd28d8a24acee7f14b6 Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Mon, 25 Nov 2019 19:51:05 +0000
 Subject: [PATCH] Kinetic lib prefix work-around
@@ -8,10 +8,10 @@ Subject: [PATCH] Kinetic lib prefix work-around
  1 file changed, 1 insertion(+)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 459a7b0..527eb50 100644
+index 1e8b07a..6503335 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -13,6 +13,7 @@ SET(PROJECT_CUSTOM_HEADER_EXTENSION "hpp")
+@@ -15,6 +15,7 @@ SET(PROJECT_USE_KEYWORD_LINK_LIBRARIES TRUE)
  # Disable -Werror on Unix for now.
  SET(CXX_DISABLE_WERROR True)
  SET(CMAKE_VERBOSE_MAKEFILE True)
