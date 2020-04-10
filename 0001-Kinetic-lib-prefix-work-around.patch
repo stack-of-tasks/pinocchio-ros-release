@@ -1,4 +1,4 @@
-From f67948faa83b2a1883fdacd28d8a24acee7f14b6 Mon Sep 17 00:00:00 2001
+From e54716c8aa76de81107c53d8308cfb4b141f2d55 Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Mon, 25 Nov 2019 19:51:05 +0000
 Subject: [PATCH] Kinetic lib prefix work-around
@@ -8,7 +8,7 @@ Subject: [PATCH] Kinetic lib prefix work-around
  1 file changed, 1 insertion(+)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 1e8b07a..6503335 100644
+index 8070606..702baf8 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -15,6 +15,7 @@ SET(PROJECT_USE_KEYWORD_LINK_LIBRARIES TRUE)
