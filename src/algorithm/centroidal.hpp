@@ -7,7 +7,7 @@
 
 #include "pinocchio/multibody/model.hpp"
 #include "pinocchio/multibody/data.hpp"
-#include "pinocchio/algorithm/check.hpp"
+#include "pinocchio/algorithm/kinematics.hpp"
 
 namespace pinocchio
 {
@@ -59,12 +59,10 @@ namespace pinocchio
     return computeCentroidalMomentum(model,data);
   }
   
+  /// \copydoc pinocchio::computeCentroidalMomentum
   ///
-  /// \brief This function has been renamed into computeCentroidalMomentum. This signature will be removed in a future release of Pinocchio.
+  /// \deprecated This function has been renamed into \ref computeCentroidalMomentum. This signature will be removed in a future release of Pinocchio.
   ///        Please consider using this new naming.
-  ///
-  /// \copydoc pinocchio::computeCentroidalMomentum<Scalar,Options,JointCollectionTpl,ConfigVectorType,TangentVectorType>
-  ///
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl,
   typename ConfigVectorType, typename TangentVectorType>
   PINOCCHIO_DEPRECATED
@@ -127,12 +125,10 @@ namespace pinocchio
     return computeCentroidalMomentumTimeVariation(model,data);
   }
 
+  /// \copydoc pinocchio::computeCentroidalMomentumTimeVariation
   ///
-  /// \brief This function has been renamed into computeCentroidalMomentumTimeVariation. This signature will be removed in a future release of Pinocchio.
+  /// \deprecated This function has been renamed into \ref computeCentroidalMomentumTimeVariation. This signature will be removed in a future release of Pinocchio.
   ///        Please consider using this new naming.
-  ///
-  /// \copydoc pinocchio::computeCentroidalMomentumTimeVariation<Scalar,Options,JointCollectionTpl,ConfigVectorType,TangentVectorType1,TangentVectorType2>
-  ///
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl,
           typename ConfigVectorType, typename TangentVectorType1, typename TangentVectorType2>
   PINOCCHIO_DEPRECATED
@@ -187,8 +183,8 @@ namespace pinocchio
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType>
   inline const typename DataTpl<Scalar,Options,JointCollectionTpl>::Matrix6x &
   computeCentroidalMap(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
-                           DataTpl<Scalar,Options,JointCollectionTpl> & data,
-                           const Eigen::MatrixBase<ConfigVectorType> & q);
+                       DataTpl<Scalar,Options,JointCollectionTpl> & data,
+                       const Eigen::MatrixBase<ConfigVectorType> & q);
   
   ///
   /// \brief Computes the time derivative of the Centroidal Momentum Matrix according to the current configuration and velocity vectors.
@@ -234,9 +230,9 @@ namespace pinocchio
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType, typename TangentVectorType>
   inline const typename DataTpl<Scalar,Options,JointCollectionTpl>::Matrix6x &
   computeCentroidalMapTimeVariation(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
-                                        DataTpl<Scalar,Options,JointCollectionTpl> & data,
-                                        const Eigen::MatrixBase<ConfigVectorType> & q,
-                                        const Eigen::MatrixBase<TangentVectorType> & v);
+                                    DataTpl<Scalar,Options,JointCollectionTpl> & data,
+                                    const Eigen::MatrixBase<ConfigVectorType> & q,
+                                    const Eigen::MatrixBase<TangentVectorType> & v);
   
 } // namespace pinocchio
 
