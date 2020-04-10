@@ -91,6 +91,46 @@ BOOST_AUTO_TEST_CASE ( build_model_from_XML )
   
   BOOST_CHECK(model.nq == 31);
 }
+  
+BOOST_AUTO_TEST_CASE ( check_tree_from_XML )
+{
+  // Read file as XML
+  std::string filestr(
+      "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+      "<robot name=\"test\">"
+      "  <link name=\"base_link\"/>"
+      "  <link name=\"link_1\"/>"
+      "  <link name=\"link_2\"/>"
+      "  <joint name=\"joint_1\" type=\"fixed\">"
+      "    <origin xyz=\"1 0 0\"/>"
+      "    <axis xyz=\"0 0 1\"/>"
+      "    <parent link=\"base_link\"/>"
+      "    <child link=\"link_1\"/>"
+      "  </joint>"
+      "  <joint name=\"joint_2\" type=\"fixed\">"
+      "    <origin xyz=\"0 1 0\"/>"
+      "    <axis xyz=\"0 0 1\"/>"
+      "    <parent link=\"link_1\"/>"
+      "    <child link=\"link_2\"/>"
+      "  </joint>"
+      "</robot>"
+      );
+  
+  pinocchio::Model model;
+  pinocchio::urdf::buildModelFromXML(filestr, model);
+
+  pinocchio::JointIndex
+    base_link_id = model.getFrameId("base_link"),
+    link1_id     = model.getFrameId("link_1"),
+    link2_id     = model.getFrameId("link_2"),
+    joint1_id    = model.getFrameId("joint_1"),
+    joint2_id    = model.getFrameId("joint_2");
+
+  BOOST_CHECK_EQUAL(base_link_id, model.frames[joint1_id].previousFrame);
+  BOOST_CHECK_EQUAL(joint1_id   , model.frames[link1_id ].previousFrame);
+  BOOST_CHECK_EQUAL(link1_id    , model.frames[joint2_id].previousFrame);
+  BOOST_CHECK_EQUAL(joint2_id   , model.frames[link2_id ].previousFrame);
+}
 
 BOOST_AUTO_TEST_CASE ( build_model_from_UDRFTree )
 {
@@ -143,6 +183,47 @@ BOOST_AUTO_TEST_CASE ( build_model_with_joint_from_UDRFTree )
   pinocchio::urdf::buildModel(urdfTree, pinocchio::JointModelFreeFlyer(), model);
   
   BOOST_CHECK(model.nq == 38);
+}
+
+BOOST_AUTO_TEST_CASE(append_two_URDF_models)
+{
+  const std::string filename = PINOCCHIO_MODEL_DIR + std::string("/simple_humanoid.urdf");
+  
+  pinocchio::Model model;
+  pinocchio::urdf::buildModel(filename, model);
+  
+  BOOST_CHECK(model.njoints == 30);
+  const int nframes = model.nframes;
+  const std::string filestr(
+                            "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+                            "<robot name=\"test\">"
+                            "  <link name=\"box\"/>"
+                            "</robot>"
+                            );
+  
+  pinocchio::urdf::buildModelFromXML(filestr, model);
+  BOOST_CHECK(model.njoints == 30);
+  BOOST_CHECK(nframes + 1 == model.nframes);
+}
+
+BOOST_AUTO_TEST_CASE(append_two_URDF_models_with_root_joint)
+{
+  const std::string filename = PINOCCHIO_MODEL_DIR + std::string("/simple_humanoid.urdf");
+  
+  pinocchio::Model model;
+  pinocchio::urdf::buildModel(filename, pinocchio::JointModelFreeFlyer(), model);
+  
+  BOOST_CHECK(model.njoints == 31);
+  const std::string filestr(
+                            "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+                            "<robot name=\"test\">"
+                            "  <link name=\"box\"/>"
+                            "</robot>"
+                            );
+  
+  
+  BOOST_CHECK_THROW(pinocchio::urdf::buildModelFromXML(filestr, pinocchio::JointModelFreeFlyer(), model),
+                    std::invalid_argument);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
