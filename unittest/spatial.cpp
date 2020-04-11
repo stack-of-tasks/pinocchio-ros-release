@@ -95,6 +95,21 @@ BOOST_AUTO_TEST_CASE ( test_SE3 )
   
   BOOST_CHECK(Minv.actInv(Minv).isIdentity());
   BOOST_CHECK(M.actInv(identity).isApprox(Minv));
+  
+  // Test normalization
+  {
+    const double prec = Eigen::NumTraits<double>::dummy_precision();
+    SE3 M(SE3::Random());
+    M.rotation() += prec * SE3::Matrix3::Random();
+    BOOST_CHECK(!M.isNormalized());
+    
+    SE3 M_normalized = M.normalized();
+    BOOST_CHECK(M_normalized.isNormalized());
+    
+    M.normalize();
+    BOOST_CHECK(M.isNormalized());
+  }
+  
 }
 
 BOOST_AUTO_TEST_CASE ( test_Motion )
@@ -397,8 +412,8 @@ BOOST_AUTO_TEST_CASE ( test_Force )
   
   const double eps = 1e-6;
   Force bf_approx(bf);
-  bf_approx.linear()[0] += eps/2.;
-  BOOST_CHECK(bf_approx.isApprox(bf,eps));
+  bf_approx.linear()[0] += 2.*eps;
+  BOOST_CHECK(!bf_approx.isApprox(bf,eps));
   
   // Test ref() method
   {
@@ -543,6 +558,15 @@ BOOST_AUTO_TEST_CASE ( test_Inertia )
   // Test constructor (Matrix6)
   Inertia I1_bis(I1.matrix());
   BOOST_CHECK(I1.matrix().isApprox(I1_bis.matrix()));
+  
+  // Test Inertia from ellipsoid
+  const double sphere_mass = 5.;
+  const double sphere_radius = 2.;
+  I1 = Inertia::FromSphere(sphere_mass, sphere_radius);
+  const double L_sphere = 2./5. * sphere_mass * sphere_radius * sphere_radius;
+  BOOST_CHECK_SMALL(I1.mass() - sphere_mass, 1e-12);
+  BOOST_CHECK(I1.lever().isZero());
+  BOOST_CHECK(I1.inertia().matrix().isApprox(Symmetric3(L_sphere, 0., L_sphere , 0., 0., L_sphere).matrix()));
 
   // Test Inertia from ellipsoid
   I1 = Inertia::FromEllipsoid(2., 3., 4., 5.);
