@@ -188,9 +188,17 @@ namespace pinocchio
     : m_mass(mass), m_com(com), m_inertia(rotational_inertia)
     {}
     
-    InertiaTpl(const InertiaTpl & clone)  // Clone constructor for std::vector 
+    InertiaTpl(const InertiaTpl & clone)  // Copy constructor
     : m_mass(clone.mass()), m_com(clone.lever()), m_inertia(clone.inertia())
     {}
+
+    InertiaTpl& operator=(const InertiaTpl & clone)  // Copy assignment operator
+    {
+      m_mass = clone.mass();
+      m_com = clone.lever();
+      m_inertia = clone.inertia();
+      return *this;
+    }
 
     template<int O2>
     InertiaTpl(const InertiaTpl<Scalar,O2> & clone)
@@ -227,6 +235,11 @@ namespace pinocchio
       return InertiaTpl(Eigen::internal::random<Scalar>()+1,
                         Vector3::Random(),
                         Symmetric3::RandomPositive());
+    }
+    
+    static InertiaTpl FromSphere(const Scalar m, const Scalar radius)
+    {
+      return FromEllipsoid(m,radius,radius,radius);
     }
 
     static InertiaTpl FromEllipsoid(const Scalar m, const Scalar x,
@@ -362,7 +375,7 @@ namespace pinocchio
     {
       const InertiaTpl& Ya = *this;
       const Scalar & mab = Ya.mass()+Yb.mass();
-      const Scalar mab_inv = 1./mab;
+      const Scalar mab_inv = Scalar(1)/mab;
       const Vector3 & AB = (Ya.lever()-Yb.lever()).eval();
       lever() *= (mass()*mab_inv); lever() += (Yb.mass()*mab_inv)*Yb.lever(); //c *= mab_inv;
       inertia() += Yb.inertia(); inertia() -= (Ya.mass()*Yb.mass()*mab_inv)* typename Symmetric3::SkewSquare(AB);
