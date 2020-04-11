@@ -73,19 +73,23 @@ namespace pinocchio
   
   inline bool computeCollisions(const GeometryModel & geom_model,
                                 GeometryData & geom_data,
-                                const bool stopAtFirstCollision = true)
+                                const bool stopAtFirstCollision)
   {
     bool isColliding = false;
     
     for (std::size_t cpt = 0; cpt < geom_model.collisionPairs.size(); ++cpt)
     {
       if(geom_data.activeCollisionPairs[cpt])
+      {
+        computeCollision(geom_model,geom_data,cpt);
+        if(!isColliding && geom_data.collisionResults[cpt].isCollision())
         {
-          computeCollision(geom_model,geom_data,cpt);
-          isColliding |= geom_data.collisionResults[cpt].isCollision();
-          if(isColliding && stopAtFirstCollision)
+          isColliding = true;
+          geom_data.collisionPairIndex = cpt; // first pair to be in collision
+          if(stopAtFirstCollision)
             return true;
         }
+      }
     }
     
     return isColliding;
