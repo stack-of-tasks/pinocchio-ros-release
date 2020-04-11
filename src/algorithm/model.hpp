@@ -12,7 +12,6 @@ namespace pinocchio
 {
   /**
    *  \brief Append a child model into a parent model, after a specific frame given by its index.
-   *  the model given as reference argument.
    *
    *  \param[in] modelA the parent model.
    *  \param[in] modelB the child model.
@@ -78,7 +77,7 @@ namespace pinocchio
    *  \brief Build a reduced model from a given input model and a list of joint to lock.
    *
    *  \param[in] model the input model to reduce.
-   *  \param[in] list_of_joints list of joints to lock in the input model.
+   *  \param[in] list_of_joints_to_lock list of joints to lock in the input model.
    *  \param[in] reference_configuration reference configuration.
    *  \param[out] reduced_model the reduced model.
    *
@@ -97,7 +96,7 @@ namespace pinocchio
    *  \brief Build a reduced model from a given input model and a list of joint to lock.
    *
    *  \param[in] model the input model to reduce.
-   *  \param[in] list_of_joints list of joints to lock in the input model.
+   *  \param[in] list_of_joints_to_lock list of joints to lock in the input model.
    *  \param[in] reference_configuration reference configuration.
    *
    *  \returns A reduce model of the input model.
@@ -125,7 +124,7 @@ namespace pinocchio
    *
    *  \param[in] model the input model to reduce.
    *  \param[in] geom_model the input geometry model to reduce.
-   *  \param[in] list_of_joints list of joints to lock in the input model.
+   *  \param[in] list_of_joints_to_lock list of joints to lock in the input model.
    *  \param[in] reference_configuration reference configuration.
    *  \param[out] reduced_model the reduced model.
    *  \param[out] reduced_geom_model the reduced geometry model.

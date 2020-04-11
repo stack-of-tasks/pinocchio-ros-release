@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015-2018 CNRS
+// Copyright (c) 2015-2020 CNRS INRIA
 // Copyright (c) 2016 Wandercraft, 86 rue de Paris 91400 Orsay, France.
 //
 
@@ -8,7 +8,9 @@
 
 namespace pinocchio
 {
-  /** The rigid transform aMb can be seen in two ways:
+  /** \brief Base class for rigid transformation.
+   *
+   * The rigid transform aMb can be seen in two ways:
    *
    * - given a point p expressed in frame B by its coordinate vector \f$ ^bp \f$, \f$ ^aM_b \f$
    * computes its coordinates in frame A by \f$ ^ap = {}^aM_b {}^bp \f$.
@@ -21,6 +23,8 @@ namespace pinocchio
    * where \f$^aAB\f$ is the vector from origin A to origin B expressed in coordinates A.
    *
    * \cheatsheet \f$ {}^aM_c = {}^aM_b {}^bM_c \f$
+   *
+   * \ingroup pinocchio_spatial
    */
   template<class Derived>
   struct SE3Base
@@ -118,6 +122,30 @@ namespace pinocchio
     bool isIdentity(const typename traits<Derived>::Scalar & prec = Eigen::NumTraits<typename traits<Derived>::Scalar>::dummy_precision()) const
     {
       return derived().isIdentity(prec);
+    }
+   
+    ///
+    /// \returns true if the rotational part of *this is a rotation matrix (normalized columns), within the precision given by prec.
+    ///
+    bool isNormalized(const Scalar & prec = Eigen::NumTraits<Scalar>::dummy_precision()) const
+    {
+      return derived().isNormalized(prec);
+    }
+    
+    ///
+    /// \brief Normalize *this in such a way the rotation part of *this lies on SO(3).
+    ///
+    void normalize()
+    {
+      derived().normalize();
+    }
+    
+    ///
+    /// \returns a Normalized version of *this, in such a way the rotation part of the returned transformation lies on SO(3).
+    ///
+    PlainType normalized() const
+    {
+      derived().normalized();
     }
     
   }; // struct SE3Base
