@@ -1,7 +1,8 @@
 //
-// Copyright (c) 2016-2019 CNRS INRIA
+// Copyright (c) 2016-2020 CNRS INRIA
 //
 
+#include "utils/model-generator.hpp"
 #include "pinocchio/parsers/sample-models.hpp"
 #include "pinocchio/algorithm/joint-configuration.hpp"
 #include "pinocchio/math/quaternion.hpp"
@@ -11,42 +12,11 @@
 
 using namespace pinocchio;
 
-template<typename D>
-void addJointAndBody(Model & model, const JointModelBase<D> & jmodel, const Model::JointIndex parent_id, const SE3 & joint_placement, const std::string & name, const Inertia & Y)
-{
-  Model::JointIndex idx;
-  typedef typename D::TangentVector_t TV;
-  typedef typename D::ConfigVector_t CV;
-  
-  idx = model.addJoint(parent_id,jmodel,joint_placement,
-                       name + "_joint",
-                       TV::Zero(),
-                       1e3 * (TV::Random() + TV::Constant(1)),
-                       1e3 * (CV::Random() - CV::Constant(1)),
-                       1e3 * (CV::Random() + CV::Constant(1))
-                       );
-  
-  model.appendBodyToJoint(idx,Y,SE3::Identity());
-}
-
-void buildModel(Model & model)
-{
-  addJointAndBody(model,JointModelFreeFlyer(),model.getJointId("universe"),SE3::Identity(),"freeflyer",Inertia::Random());
-  addJointAndBody(model,JointModelSpherical(),model.getJointId("freeflyer_joint"),SE3::Identity(),"spherical",Inertia::Random());
-  addJointAndBody(model,JointModelPlanar(),model.getJointId("spherical_joint"),SE3::Identity(),"planar",Inertia::Random());
-  addJointAndBody(model,JointModelRX(),model.getJointId("planar_joint"),SE3::Identity(),"rx",Inertia::Random());
-  addJointAndBody(model,JointModelPX(),model.getJointId("rx_joint"),SE3::Identity(),"px",Inertia::Random());
-  addJointAndBody(model,JointModelPrismaticUnaligned(SE3::Vector3(1,0,0)),model.getJointId("px_joint"),SE3::Identity(),"pu",Inertia::Random());
-  addJointAndBody(model,JointModelRevoluteUnaligned(SE3::Vector3(0,0,1)),model.getJointId("pu_joint"),SE3::Identity(),"ru",Inertia::Random());
-  addJointAndBody(model,JointModelSphericalZYX(),model.getJointId("ru_joint"),SE3::Identity(),"sphericalZYX",Inertia::Random());
-  addJointAndBody(model,JointModelTranslation(),model.getJointId("sphericalZYX_joint"),SE3::Identity(),"translation",Inertia::Random());
-}
-
 BOOST_AUTO_TEST_SUITE ( BOOST_TEST_MODULE )
 
 BOOST_AUTO_TEST_CASE ( integration_test )
 {
-  Model model; buildModel(model);
+  Model model; buildAllJointsModel(model);
 
   std::vector<Eigen::VectorXd> qs(2);
   std::vector<Eigen::VectorXd> qdots(2);
@@ -66,7 +36,7 @@ BOOST_AUTO_TEST_CASE ( integration_test )
 
 BOOST_AUTO_TEST_CASE ( interpolate_test )
 {
-  Model model; buildModel(model);
+  Model model; buildAllJointsModel(model);
 
   Eigen::VectorXd q0(randomConfiguration(model, -1 * Eigen::VectorXd::Ones(model.nq), Eigen::VectorXd::Ones(model.nq) ));
   Eigen::VectorXd q1(randomConfiguration(model, -1 * Eigen::VectorXd::Ones(model.nq), Eigen::VectorXd::Ones(model.nq) ));
@@ -80,7 +50,7 @@ BOOST_AUTO_TEST_CASE ( interpolate_test )
 
 BOOST_AUTO_TEST_CASE ( diff_integration_test )
 {
-  Model model; buildModel(model);
+  Model model; buildAllJointsModel(model);
   
   std::vector<Eigen::VectorXd> qs(2);
   std::vector<Eigen::VectorXd> vs(2);
@@ -138,7 +108,7 @@ BOOST_AUTO_TEST_CASE ( diff_integration_test )
 
 BOOST_AUTO_TEST_CASE ( diff_difference_test )
 {
-  Model model; buildModel(model);
+  Model model; buildAllJointsModel(model);
   
   std::vector<Eigen::VectorXd> qs(2);
   std::vector<Eigen::VectorXd> vs(2);
@@ -187,7 +157,7 @@ BOOST_AUTO_TEST_CASE ( diff_difference_test )
 
 BOOST_AUTO_TEST_CASE ( diff_difference_vs_diff_integrate )
 {
-  Model model; buildModel(model);
+  Model model; buildAllJointsModel(model);
   
   std::vector<Eigen::VectorXd> qs(2);
   std::vector<Eigen::VectorXd> vs(2);
@@ -218,9 +188,95 @@ BOOST_AUTO_TEST_CASE ( diff_difference_vs_diff_integrate )
 }
 
 
+BOOST_AUTO_TEST_CASE ( dIntegrate_assignementop_test )
+{
+  Model model; buildAllJointsModel(model);
+  
+  std::vector<Eigen::MatrixXd> results(3,Eigen::MatrixXd::Zero(model.nv,model.nv));
+  
+  Eigen::VectorXd qs = Eigen::VectorXd::Ones(model.nq);
+  normalize(model,qs);
+  
+  Eigen::VectorXd vs = Eigen::VectorXd::Random(model.nv);
+
+  //SETTO
+  dIntegrate(model,qs,vs,results[0],ARG0);
+  dIntegrate(model,qs,vs,results[1],ARG0,SETTO);
+  BOOST_CHECK(results[0].isApprox(results[1]));
+
+  //ADDTO
+  results[1] = Eigen::MatrixXd::Random(model.nv, model.nv);
+  results[2] = results[1];
+  results[0].setZero();
+  dIntegrate(model,qs,vs,results[0],ARG0,SETTO);
+  dIntegrate(model,qs,vs,results[1],ARG0,ADDTO);
+  BOOST_CHECK(results[1].isApprox(results[2] + results[0]));
+
+  //RMTO
+  results[1] = Eigen::MatrixXd::Random(model.nv, model.nv);
+  results[2] = results[1];
+  results[0].setZero();
+  dIntegrate(model,qs,vs,results[0],ARG0,SETTO);
+  dIntegrate(model,qs,vs,results[1],ARG0,RMTO);
+  BOOST_CHECK(results[1].isApprox(results[2] - results[0]));
+
+  //SETTO
+  results[0].setZero();
+  results[1].setZero();
+  dIntegrate(model,qs,vs,results[0],ARG1);
+  dIntegrate(model,qs,vs,results[1],ARG1,SETTO);
+  BOOST_CHECK(results[0].isApprox(results[1]));
+
+  //ADDTO
+  results[1] = Eigen::MatrixXd::Random(model.nv, model.nv);
+  results[2] = results[1];
+  results[0].setZero();
+  dIntegrate(model,qs,vs,results[0],ARG1,SETTO);
+  dIntegrate(model,qs,vs,results[1],ARG1,ADDTO);
+  BOOST_CHECK(results[1].isApprox(results[2] + results[0]));
+
+  //RMTO
+  results[1] = Eigen::MatrixXd::Random(model.nv, model.nv);
+  results[2] = results[1];
+  results[0].setZero();
+  dIntegrate(model,qs,vs,results[0],ARG1,SETTO);
+  dIntegrate(model,qs,vs,results[1],ARG1,RMTO);
+  BOOST_CHECK(results[1].isApprox(results[2] - results[0]));
+
+  //Transport
+  std::vector<Eigen::MatrixXd> J(2,Eigen::MatrixXd::Zero(model.nv,2*model.nv));
+  J[0] = Eigen::MatrixXd::Random(model.nv, 2*model.nv);
+  results[0].setZero();
+  dIntegrate(model,qs,vs,results[0],ARG0,SETTO);
+  dIntegrateTransport(model,qs,vs,J[0],J[1],ARG0);
+  BOOST_CHECK(J[1].isApprox(results[0] * J[0]));
+
+  J[0] = Eigen::MatrixXd::Random(model.nv, 2*model.nv);
+  results[0].setZero();
+  dIntegrate(model,qs,vs,results[0],ARG1,SETTO);
+  dIntegrateTransport(model,qs,vs,J[0],J[1],ARG1);
+  BOOST_CHECK(J[1].isApprox(results[0] * J[0]));  
+
+  //TransportInPlace
+  J[1] = Eigen::MatrixXd::Random(model.nv, 2*model.nv);
+  J[0] = J[1];
+  results[0].setZero();
+  dIntegrate(model,qs,vs,results[0],ARG0,SETTO);
+  dIntegrateTransport(model,qs,vs,J[1],ARG0);
+  BOOST_CHECK(J[1].isApprox(results[0] * J[0]));
+
+  J[1] = Eigen::MatrixXd::Random(model.nv, 2*model.nv);
+  J[0] = J[1];
+  results[0].setZero();
+  dIntegrate(model,qs,vs,results[0],ARG1,SETTO);
+  dIntegrateTransport(model,qs,vs,J[1],ARG1);
+  BOOST_CHECK(J[1].isApprox(results[0] * J[0]));  
+
+}
+
 BOOST_AUTO_TEST_CASE ( integrate_difference_test )
 {
- Model model; buildModel(model);
+ Model model; buildAllJointsModel(model);
 
  Eigen::VectorXd q0(randomConfiguration(model, -1 * Eigen::VectorXd::Ones(model.nq), Eigen::VectorXd::Ones(model.nq) ));
  Eigen::VectorXd q1(randomConfiguration(model, -1 * Eigen::VectorXd::Ones(model.nq), Eigen::VectorXd::Ones(model.nq) ));
@@ -234,7 +290,7 @@ BOOST_AUTO_TEST_CASE ( integrate_difference_test )
 
 BOOST_AUTO_TEST_CASE ( neutral_configuration_test )
 {
-  Model model; buildModel(model);
+  Model model; buildAllJointsModel(model);
 
   Eigen::VectorXd expected(model.nq);
   expected << 0,0,0,0,0,0,1,
@@ -254,7 +310,7 @@ BOOST_AUTO_TEST_CASE ( neutral_configuration_test )
 
 BOOST_AUTO_TEST_CASE ( distance_configuration_test )
 {
-  Model model; buildModel(model);
+  Model model; buildAllJointsModel(model);
   
   Model::ConfigVectorType q0 = neutral(model);
   Model::ConfigVectorType q1(integrate (model, q0, Model::TangentVectorType::Ones(model.nv)));
@@ -267,7 +323,7 @@ BOOST_AUTO_TEST_CASE ( distance_configuration_test )
 
 BOOST_AUTO_TEST_CASE ( squared_distance_test )
 {
-  Model model; buildModel(model);
+  Model model; buildAllJointsModel(model);
 
   Eigen::VectorXd q0(randomConfiguration(model, -1 * Eigen::VectorXd::Ones(model.nq), Eigen::VectorXd::Ones(model.nq) ));
   Eigen::VectorXd q1(randomConfiguration(model, -1 * Eigen::VectorXd::Ones(model.nq), Eigen::VectorXd::Ones(model.nq) ));
@@ -280,7 +336,7 @@ BOOST_AUTO_TEST_CASE ( squared_distance_test )
 
 BOOST_AUTO_TEST_CASE ( uniform_sampling_test )
 {
-  Model model; buildModel(model);
+  Model model; buildAllJointsModel(model);
 
   model.lowerPositionLimit = -1 * Eigen::VectorXd::Ones(model.nq);
   model.upperPositionLimit = Eigen::VectorXd::Ones(model.nq);
@@ -294,7 +350,7 @@ BOOST_AUTO_TEST_CASE ( uniform_sampling_test )
 
 BOOST_AUTO_TEST_CASE ( normalize_test )
 {
-  Model model; buildModel(model);
+  Model model; buildAllJointsModel(model);
 
   Eigen::VectorXd q (Eigen::VectorXd::Ones(model.nq));
   pinocchio::normalize(model, q);

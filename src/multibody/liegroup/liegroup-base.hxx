@@ -1,9 +1,9 @@
 //
-// Copyright (c) 2016-2019 CNRS INRIA
+// Copyright (c) 2016-2020 CNRS INRIA
 //
 
-#ifndef __pinocchio_lie_group_operation_base_hxx__
-#define __pinocchio_lie_group_operation_base_hxx__
+#ifndef __pinocchio_multibody_liegroup_liegroup_operation_base_hxx__
+#define __pinocchio_multibody_liegroup_liegroup_operation_base_hxx__
 
 #include "pinocchio/macros.hpp"
 
@@ -41,15 +41,20 @@ namespace pinocchio {
   void LieGroupBase<Derived>::dIntegrate(const Eigen::MatrixBase<Config_t >  & q,
                                          const Eigen::MatrixBase<Tangent_t>  & v,
                                          const Eigen::MatrixBase<JacobianOut_t> & J,
-                                         const ArgumentPosition arg) const
+                                         const ArgumentPosition arg,
+                                         const AssignmentOperatorType op) const
   {
     assert((arg==ARG0||arg==ARG1) && "arg should be either ARG0 or ARG1");
     
     switch (arg) {
       case ARG0:
-        dIntegrate_dq(q.derived(),v.derived(),PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J)); return;
+        dIntegrate_dq(q.derived(),v.derived(),
+                      PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J),op);
+        return;
       case ARG1:
-        dIntegrate_dv(q.derived(),v.derived(),PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J)); return;
+        dIntegrate_dv(q.derived(),v.derived(),
+                      PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J),op);
+        return;
       default: return;
     }
   }
@@ -59,14 +64,15 @@ namespace pinocchio {
   void LieGroupBase<Derived>::dIntegrate_dq(
       const Eigen::MatrixBase<Config_t >  & q,
       const Eigen::MatrixBase<Tangent_t>  & v,
-      const Eigen::MatrixBase<JacobianOut_t> & J) const
+      const Eigen::MatrixBase<JacobianOut_t> & J,
+      const AssignmentOperatorType op) const
   {
     EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Config_t     , ConfigVector_t);
     EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Tangent_t    , TangentVector_t);
     EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(JacobianOut_t, JacobianMatrix_t);
     derived().dIntegrate_dq_impl(q.derived(),
                                  v.derived(),
-                                 PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J));
+                                 PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J),op);
   }
 
   template <class Derived>
@@ -74,14 +80,125 @@ namespace pinocchio {
   void LieGroupBase<Derived>::dIntegrate_dv(
       const Eigen::MatrixBase<Config_t >  & q,
       const Eigen::MatrixBase<Tangent_t>  & v,
-      const Eigen::MatrixBase<JacobianOut_t> & J) const
+      const Eigen::MatrixBase<JacobianOut_t> & J,
+      const AssignmentOperatorType op) const
   {
     EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Config_t     , ConfigVector_t);
     EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Tangent_t    , TangentVector_t);
     EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(JacobianOut_t, JacobianMatrix_t);
     derived().dIntegrate_dv_impl(q.derived(),
                                  v.derived(),
-                                 PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J));
+                                 PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J),
+                                 op);
+  }
+
+  template <class Derived>
+  template<class Config_t, class Tangent_t, class JacobianIn_t, class JacobianOut_t>
+  void LieGroupBase<Derived>::dIntegrateTransport(const Eigen::MatrixBase<Config_t > & q,
+                                                  const Eigen::MatrixBase<Tangent_t> & v,
+                                                  const Eigen::MatrixBase<JacobianIn_t> & Jin,
+                                                  const Eigen::MatrixBase<JacobianOut_t> & Jout,
+                                                  const ArgumentPosition arg) const
+  {
+    assert((arg==ARG0||arg==ARG1) && "arg should be either ARG0 or ARG1");
+    
+    switch (arg) {
+      case ARG0:
+        dIntegrateTransport_dq(q.derived(),v.derived(),Jin.derived(),
+                               PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,Jout));
+        return;
+      case ARG1:
+        dIntegrateTransport_dv(q.derived(),v.derived(),Jin.derived(),
+                               PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,Jout));
+        return;
+      default:
+        return;
+    }
+  }
+
+  template <class Derived>
+  template <class Config_t, class Tangent_t, class JacobianIn_t, class JacobianOut_t>
+  void LieGroupBase<Derived>::dIntegrateTransport_dq(const Eigen::MatrixBase<Config_t > & q,
+                                                     const Eigen::MatrixBase<Tangent_t> & v,
+                                                     const Eigen::MatrixBase<JacobianIn_t> & Jin,
+                                                     const Eigen::MatrixBase<JacobianOut_t> & Jout) const
+  {
+    EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Config_t     , ConfigVector_t);
+    EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Tangent_t    , TangentVector_t);
+    //EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(JacobianOut_t, JacobianMatrix_t);
+    derived().dIntegrateTransport_dq_impl(q.derived(),
+                                          v.derived(),
+                                          Jin.derived(),
+                                          PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,Jout));
+  }
+
+  template <class Derived>
+  template <class Config_t, class Tangent_t, class JacobianIn_t, class JacobianOut_t>
+  void LieGroupBase<Derived>::dIntegrateTransport_dv(const Eigen::MatrixBase<Config_t >  & q,
+                                                     const Eigen::MatrixBase<Tangent_t>  & v,
+                                                     const Eigen::MatrixBase<JacobianIn_t> & Jin,
+                                                     const Eigen::MatrixBase<JacobianOut_t> & Jout) const
+  {
+    EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Config_t     , ConfigVector_t);
+    EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Tangent_t    , TangentVector_t);
+    //EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(JacobianOut_t, JacobianMatrix_t);
+    derived().dIntegrateTransport_dv_impl(q.derived(),
+                                          v.derived(),
+                                          Jin.derived(),
+                                          PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,Jout));
+  }
+
+
+  template <class Derived>
+  template<class Config_t, class Tangent_t, class Jacobian_t>
+  void LieGroupBase<Derived>::dIntegrateTransport(const Eigen::MatrixBase<Config_t >  & q,
+                                                  const Eigen::MatrixBase<Tangent_t>  & v,
+                                                  const Eigen::MatrixBase<Jacobian_t> & J,
+                                                  const ArgumentPosition arg) const
+  {
+    assert((arg==ARG0||arg==ARG1) && "arg should be either ARG0 or ARG1");
+    
+    switch (arg) {
+      case ARG0:
+        dIntegrateTransport_dq(q.derived(),v.derived(),
+                               PINOCCHIO_EIGEN_CONST_CAST(Jacobian_t,J));
+        return;
+      case ARG1:
+        dIntegrateTransport_dv(q.derived(),v.derived(),
+                               PINOCCHIO_EIGEN_CONST_CAST(Jacobian_t,J));
+        return;
+      default:
+        return;
+    }
+  }
+
+  template <class Derived>
+  template <class Config_t, class Tangent_t, class Jacobian_t>
+  void LieGroupBase<Derived>::dIntegrateTransport_dq(
+      const Eigen::MatrixBase<Config_t >  & q,
+      const Eigen::MatrixBase<Tangent_t>  & v,
+      const Eigen::MatrixBase<Jacobian_t> & J) const
+  {
+    EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Config_t     , ConfigVector_t);
+    EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Tangent_t    , TangentVector_t);
+    //EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(JacobianOut_t, JacobianMatrix_t);
+    derived().dIntegrateTransport_dq_impl(q.derived(),
+                                          v.derived(),
+                                          PINOCCHIO_EIGEN_CONST_CAST(Jacobian_t,J));
+  }
+
+  template <class Derived>
+  template <class Config_t, class Tangent_t, class Jacobian_t>
+  void LieGroupBase<Derived>::dIntegrateTransport_dv(const Eigen::MatrixBase<Config_t > & q,
+                                                     const Eigen::MatrixBase<Tangent_t> & v,
+                                                     const Eigen::MatrixBase<Jacobian_t> & J) const
+  {
+    EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Config_t     , ConfigVector_t);
+    EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Tangent_t    , TangentVector_t);
+    //EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(JacobianOut_t, JacobianMatrix_t);
+    derived().dIntegrateTransport_dv_impl(q.derived(),
+                                          v.derived(),
+                                          PINOCCHIO_EIGEN_CONST_CAST(Jacobian_t,J));
   }
 
   /**
@@ -357,4 +474,4 @@ namespace pinocchio {
 
 } // namespace pinocchio
 
-#endif // __pinocchio_lie_group_operation_base_hxx__
+#endif // __pinocchio_multibody_liegroup_liegroup_operation_base_hxx__

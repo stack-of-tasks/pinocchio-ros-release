@@ -1,13 +1,14 @@
 //
-// Copyright (c) 2016-2019 CNRS INRIA
+// Copyright (c) 2016-2020 CNRS INRIA
 //
 
-#ifndef __pinocchio_special_euclidean_operation_hpp__
-#define __pinocchio_special_euclidean_operation_hpp__
+#ifndef __pinocchio_multibody_liegroup_special_euclidean_operation_hpp__
+#define __pinocchio_multibody_liegroup_special_euclidean_operation_hpp__
 
 #include <limits>
 
 #include "pinocchio/macros.hpp"
+#include "pinocchio/math/quaternion.hpp"
 #include "pinocchio/spatial/fwd.hpp"
 #include "pinocchio/utils/static-if.hpp"
 #include "pinocchio/spatial/se3.hpp"
@@ -73,11 +74,11 @@ namespace pinocchio
         vcross -= -v(1)*R.col(0) + v(0)*R.col(1);
         vcross /= omega;
         Scalar omega_abs = math::fabs(omega);
-        PINOCCHIO_EIGEN_CONST_CAST(Vector2Like,t).coeffRef(0) = if_then_else(omega_abs > 1e-14,
+        PINOCCHIO_EIGEN_CONST_CAST(Vector2Like,t).coeffRef(0) = if_then_else(internal::GT, omega_abs , Scalar(1e-14),
                                                                              vcross.coeff(0),
                                                                              v.coeff(0));
         
-        PINOCCHIO_EIGEN_CONST_CAST(Vector2Like,t).coeffRef(1) = if_then_else(omega_abs > 1e-14,
+        PINOCCHIO_EIGEN_CONST_CAST(Vector2Like,t).coeffRef(1) = if_then_else(internal::GT, omega_abs, Scalar(1e-14),
                                                                              vcross.coeff(1),
                                                                              v.coeff(1));
       }
@@ -87,20 +88,42 @@ namespace pinocchio
     template<typename Matrix2Like, typename Vector2Like, typename Matrix3Like>
     static void toInverseActionMatrix(const Eigen::MatrixBase<Matrix2Like> & R,
                                       const Eigen::MatrixBase<Vector2Like> & t,
-                                      const Eigen::MatrixBase<Matrix3Like> & M)
+                                      const Eigen::MatrixBase<Matrix3Like> & M,
+                                      const AssignmentOperatorType op)
     {
       EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Matrix2Like, 2, 2);
       EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(Vector2Like, 2);
       EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Matrix3Like, 3, 3);
-      
+      Matrix3Like & Mout = PINOCCHIO_EIGEN_CONST_CAST(Matrix3Like,M);
       typedef typename Matrix3Like::Scalar Scalar;
       
-      Matrix3Like & Mout = PINOCCHIO_EIGEN_CONST_CAST(Matrix3Like,M);
-      Mout.template topLeftCorner<2,2>() = R.transpose();
-      typename PINOCCHIO_EIGEN_PLAIN_TYPE(Vector2Like) tinv(R.transpose() * t);
-      Mout.template topRightCorner<2,1>() << - tinv(1), tinv(0);
-      Mout.template bottomLeftCorner<1,2>().setZero();
-      Mout(2,2) = (Scalar)1;
+      typename PINOCCHIO_EIGEN_PLAIN_TYPE(Vector2Like) tinv((R.transpose() * t).reverse());
+      tinv[0] *= Scalar(-1.);
+      switch(op)
+        {
+        case SETTO:
+          Mout.template topLeftCorner<2,2>() = R.transpose();
+          Mout.template topRightCorner<2,1>() = tinv;
+          Mout.template bottomLeftCorner<1,2>().setZero();
+          Mout(2,2) = (Scalar)1;
+          break;
+        case ADDTO:
+          Mout.template topLeftCorner<2,2>() += R.transpose();
+          Mout.template topRightCorner<2,1>() += tinv;
+          Mout(2,2) += (Scalar)1;
+          break;
+        case RMTO:
+          Mout.template topLeftCorner<2,2>() -= R.transpose();
+          Mout.template topRightCorner<2,1>() -= tinv;
+          Mout(2,2) -= (Scalar)1;
+          break;
+        default:
+          assert(false && "Wrong Op requesed value");
+          break;
+        }
+
+
+      
     }
 
     template<typename Matrix2Like, typename Vector2Like, typename TangentVector>
@@ -119,16 +142,11 @@ namespace pinocchio
       Scalar1 t = SO2_t::log(R);
       const Scalar1 tabs = math::fabs(t);
       const Scalar1 t2 = t*t;
+      Scalar1 st,ct; SINCOS(tabs, &st, &ct);
       Scalar1 alpha;
-      if (tabs < 1e-4)
-      {
-        alpha = 1 - t2/12 - t2*t2/720;
-      }
-      else
-      {
-        Scalar1 st,ct; SINCOS(tabs, &st, &ct);
-        alpha = tabs*st/(2*(1-ct));
-      }
+      alpha = internal::if_then_else(internal::LT, tabs, Scalar(1e-4),
+                                     1 - t2/12 - t2*t2/720,
+                                     tabs*st/(2*(1-ct)));
 
       vout.template head<2>().noalias() = alpha * p;
       vout(0) += t/2 * p(1);
@@ -152,21 +170,16 @@ namespace pinocchio
       Scalar1 t = SO2_t::log(R);
       const Scalar1 tabs = math::fabs(t);
       Scalar1 alpha, alpha_dot;
-      if (tabs < 1e-4)
-      {
-        Scalar1 t2 = t*t;
-        alpha = 1 - t2/12;
-        alpha_dot = - t / 6 - t2*t / 180;
-      }
-      else
-      {
-        Scalar1 st,ct; SINCOS(t, &st, &ct);
-        Scalar1 inv_2_1_ct = 0.5 / (1-ct);
-        // t * sin(t) / (2 * (1 - cos(t)) )
-        alpha = t*st*inv_2_1_ct;
-        // [ ( 1 - cos(t) ) * sin(t) + t * cos(t) - 1 ] / (2 * (1 - cos(t))^2 )
-        alpha_dot = (st-t) * inv_2_1_ct;
-      }
+      Scalar1 t2 = t*t;
+      Scalar1 st,ct; SINCOS(t, &st, &ct);
+      Scalar1 inv_2_1_ct = 0.5 / (1-ct);
+        
+      alpha = internal::if_then_else(internal::LT, tabs, Scalar(1e-4),
+                                     1 - t2/12,
+                                     t*st*inv_2_1_ct);
+      alpha_dot = internal::if_then_else(internal::LT, tabs, Scalar(1e-4),
+                                         - t / 6 - t2*t / 180,
+                                         (st-t) * inv_2_1_ct);
 
       typename PINOCCHIO_EIGEN_PLAIN_TYPE(Matrix2Like) V;
       V(0,0) = V(1,1) = alpha;
@@ -209,11 +222,6 @@ namespace pinocchio
                                 const Eigen::MatrixBase<ConfigR_t> & q1,
                                 const Eigen::MatrixBase<Tangent_t> & d)
     {
-      if (q0 == q1)
-      {
-        PINOCCHIO_EIGEN_CONST_CAST(Tangent_t,d).setZero();
-        return;
-      }
       Matrix2 R0, R1; Vector2 t0, t1;
       forwardKinematics(R0, t0, q0);
       forwardKinematics(R1, t1, q1);
@@ -224,9 +232,9 @@ namespace pinocchio
     }
 
     template <ArgumentPosition arg, class ConfigL_t, class ConfigR_t, class JacobianOut_t>
-    void dDifference_impl (const Eigen::MatrixBase<ConfigL_t> & q0,
-                           const Eigen::MatrixBase<ConfigR_t> & q1,
-                           const Eigen::MatrixBase<JacobianOut_t>& J) const
+    void dDifference_impl(const Eigen::MatrixBase<ConfigL_t> & q0,
+                          const Eigen::MatrixBase<ConfigR_t> & q1,
+                          const Eigen::MatrixBase<JacobianOut_t>& J) const
     {
       Matrix2 R0, R1; Vector2 t0, t1;
       forwardKinematics(R0, t0, q0);
@@ -287,7 +295,8 @@ namespace pinocchio
     template <class Config_t, class Tangent_t, class JacobianOut_t>
     static void dIntegrate_dq_impl(const Eigen::MatrixBase<Config_t >  & /*q*/,
                                    const Eigen::MatrixBase<Tangent_t>  & v,
-                                   const Eigen::MatrixBase<JacobianOut_t>& J)
+                                   const Eigen::MatrixBase<JacobianOut_t>& J,
+                                   const AssignmentOperatorType op=SETTO)
     {
       JacobianOut_t & Jout = PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J);
 
@@ -295,41 +304,134 @@ namespace pinocchio
       Vector2 t;
       exp(v, R, t);
 
-      toInverseActionMatrix(R, t, Jout);
+      toInverseActionMatrix(R, t, Jout, op);
     }
 
     template <class Config_t, class Tangent_t, class JacobianOut_t>
     static void dIntegrate_dv_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
                                    const Eigen::MatrixBase<Tangent_t> & v,
-                                   const Eigen::MatrixBase<JacobianOut_t> & J)
+                                   const Eigen::MatrixBase<JacobianOut_t> & J,
+                                   const AssignmentOperatorType op=SETTO)
     {
       JacobianOut_t & Jout = PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J);
       // TODO sparse version
       MotionTpl<Scalar,0> nu; nu.toVector() << v.template head<2>(), 0, 0, 0, v[2]; 
       Eigen::Matrix<Scalar,6,6> Jtmp6;
       Jexp6(nu, Jtmp6);
-      Jout << Jtmp6.template    topLeftCorner<2,2>(), Jtmp6.template    topRightCorner<2,1>(),
-              Jtmp6.template bottomLeftCorner<1,2>(), Jtmp6.template bottomRightCorner<1,1>();
+
+      switch(op)
+        {
+        case SETTO:
+          Jout << Jtmp6.template topLeftCorner<2,2>(), Jtmp6.template topRightCorner<2,1>(),
+            Jtmp6.template bottomLeftCorner<1,2>(), Jtmp6.template bottomRightCorner<1,1>();
+          break;
+        case ADDTO:
+          Jout.template topLeftCorner<2,2>() += Jtmp6.template topLeftCorner<2,2>();
+          Jout.template topRightCorner<2,1>() += Jtmp6.template topRightCorner<2,1>();
+          Jout.template bottomLeftCorner<1,2>() += Jtmp6.template bottomLeftCorner<1,2>();
+          Jout.template bottomRightCorner<1,1>() += Jtmp6.template bottomRightCorner<1,1>();
+          break;
+        case RMTO:
+          Jout.template topLeftCorner<2,2>() -= Jtmp6.template topLeftCorner<2,2>();
+          Jout.template topRightCorner<2,1>() -= Jtmp6.template topRightCorner<2,1>();
+          Jout.template bottomLeftCorner<1,2>() -= Jtmp6.template bottomLeftCorner<1,2>();
+          Jout.template bottomRightCorner<1,1>() -= Jtmp6.template bottomRightCorner<1,1>();
+          break;
+        default:
+          assert(false && "Wrong Op requesed value");
+          break;
+        }
     }
 
-    // interpolate_impl use default implementation.
-    // template <class ConfigL_t, class ConfigR_t, class ConfigOut_t>
-    // static void interpolate_impl(const Eigen::MatrixBase<ConfigL_t> & q0,
-                                 // const Eigen::MatrixBase<ConfigR_t> & q1,
-                                 // const Scalar& u,
-                                 // const Eigen::MatrixBase<ConfigOut_t>& qout)
+    template <class Config_t, class Tangent_t, class JacobianIn_t, class JacobianOut_t>
+    void dIntegrateTransport_dq_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                     const Eigen::MatrixBase<Tangent_t> & v,
+                                     const Eigen::MatrixBase<JacobianIn_t> & Jin,
+                                     const Eigen::MatrixBase<JacobianOut_t> & J_out) const
+    {
+      JacobianOut_t & Jout = PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J_out);
+      Matrix2 R;
+      Vector2 t;
+      exp(v, R, t);
 
-    // template <class ConfigL_t, class ConfigR_t>
-    // static double squaredDistance_impl(const Eigen::MatrixBase<ConfigL_t> & q0,
-                                       // const Eigen::MatrixBase<ConfigR_t> & q1)
+      Vector2 tinv = (R.transpose() * t).reverse();
+      tinv[0] *= Scalar(-1.);
+
+      Jout.template topRows<2>().noalias() = R.transpose() * Jin.template topRows<2>();
+      Jout.template topRows<2>().noalias() += tinv * Jin.template bottomRows<1>();
+      Jout.template bottomRows<1>() = Jin.template bottomRows<1>();
+    }
+
+    template <class Config_t, class Tangent_t, class JacobianIn_t, class JacobianOut_t>
+    void dIntegrateTransport_dv_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                     const Eigen::MatrixBase<Tangent_t> & v,
+                                     const Eigen::MatrixBase<JacobianIn_t> & Jin,
+                                     const Eigen::MatrixBase<JacobianOut_t> & J_out) const
+    {
+      JacobianOut_t & Jout = PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J_out);
+      MotionTpl<Scalar,0> nu; nu.toVector() << v.template head<2>(), 0, 0, 0, v[2]; 
+
+      Eigen::Matrix<Scalar,6,6> Jtmp6;
+      Jexp6(nu, Jtmp6);
+      
+      Jout.template topRows<2>().noalias()
+      = Jtmp6.template topLeftCorner<2,2>() * Jin.template topRows<2>();
+      Jout.template topRows<2>().noalias()
+      += Jtmp6.template topRightCorner<2,1>() * Jin.template bottomRows<1>();
+      Jout.template bottomRows<1>().noalias()
+      = Jtmp6.template bottomLeftCorner<1,2>()* Jin.template topRows<2>();
+      Jout.template bottomRows<1>().noalias()
+      += Jtmp6.template bottomRightCorner<1,1>() * Jin.template bottomRows<1>();
+
+    }
+
+    template <class Config_t, class Tangent_t, class Jacobian_t>
+    void dIntegrateTransport_dq_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                     const Eigen::MatrixBase<Tangent_t> & v,
+                                     const Eigen::MatrixBase<Jacobian_t> & J) const
+    {
+      Jacobian_t & Jout = PINOCCHIO_EIGEN_CONST_CAST(Jacobian_t,J);
+      Matrix2 R;
+      Vector2 t;
+      exp(v, R, t);
+
+      Vector2 tinv = (R.transpose() * t).reverse();
+      tinv[0] *= Scalar(-1);
+      //TODO: Aliasing
+      Jout.template topRows<2>() = R.transpose() * Jout.template topRows<2>();
+      //No Aliasing
+      Jout.template topRows<2>().noalias() += tinv * Jout.template bottomRows<1>();
+    }
+
+    template <class Config_t, class Tangent_t, class Jacobian_t>
+    void dIntegrateTransport_dv_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                     const Eigen::MatrixBase<Tangent_t> & v,
+                                     const Eigen::MatrixBase<Jacobian_t> & J) const
+    {
+      Jacobian_t & Jout = PINOCCHIO_EIGEN_CONST_CAST(Jacobian_t,J);
+      MotionTpl<Scalar,0> nu; nu.toVector() << v.template head<2>(), 0, 0, 0, v[2]; 
+
+      Eigen::Matrix<Scalar,6,6> Jtmp6;
+      Jexp6(nu, Jtmp6);
+      //TODO: Remove aliasing
+      Jout.template topRows<2>()
+      = Jtmp6.template topLeftCorner<2,2>() * Jout.template topRows<2>();
+      Jout.template topRows<2>().noalias()
+      += Jtmp6.template topRightCorner<2,1>() * Jout.template bottomRows<1>();
+      Jout.template bottomRows<1>()
+      = Jtmp6.template bottomRightCorner<1,1>() * Jout.template bottomRows<1>();
+      Jout.template bottomRows<1>().noalias()
+      += Jtmp6.template bottomLeftCorner<1,2>() * Jout.template topRows<2>();
+    }
+
     template <class Config_t>
-    static void normalize_impl (const Eigen::MatrixBase<Config_t>& qout)
+    static void normalize_impl(const Eigen::MatrixBase<Config_t> & qout)
     {
       PINOCCHIO_EIGEN_CONST_CAST(Config_t,qout).template tail<2>().normalize();
     }
 
     template <class Config_t>
-    void random_impl (const Eigen::MatrixBase<Config_t>& qout) const
+    void random_impl(const Eigen::MatrixBase<Config_t> & qout) const
     {
       R2crossSO2_t().random(qout);
     }
@@ -396,6 +498,7 @@ namespace pinocchio
     typedef Eigen::Map<const Quaternion_t> ConstQuaternionMap_t;
     typedef SE3Tpl<Scalar,Options> Transformation_t;
     typedef SE3Tpl<Scalar,Options> SE3;
+    typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
 
     /// Get dimension of Lie Group vector representation
     ///
@@ -427,45 +530,49 @@ namespace pinocchio
                                 const Eigen::MatrixBase<ConfigR_t> & q1,
                                 const Eigen::MatrixBase<Tangent_t> & d)
     {
-      if (q0 == q1)
-      {
-        PINOCCHIO_EIGEN_CONST_CAST(Tangent_t,d).setZero();
-        return;
-      }
-      ConstQuaternionMap_t p0 (q0.derived().template tail<4>().data());
-      ConstQuaternionMap_t p1 (q1.derived().template tail<4>().data());
+      ConstQuaternionMap_t quat0 (q0.derived().template tail<4>().data());
+      assert(quaternion::isNormalized(quat0,RealScalar(PINOCCHIO_DEFAULT_QUATERNION_NORM_TOLERANCE_VALUE)));
+      ConstQuaternionMap_t quat1 (q1.derived().template tail<4>().data());
+      assert(quaternion::isNormalized(quat1,RealScalar(PINOCCHIO_DEFAULT_QUATERNION_NORM_TOLERANCE_VALUE)));
+      
       PINOCCHIO_EIGEN_CONST_CAST(Tangent_t,d)
-        = log6(  SE3(p0.matrix(), q0.derived().template head<3>()).inverse()
-               * SE3(p1.matrix(), q1.derived().template head<3>())).toVector();
+        = log6(  SE3(quat0.matrix(), q0.derived().template head<3>()).inverse()
+               * SE3(quat1.matrix(), q1.derived().template head<3>())).toVector();
     }
 
     /// \cheatsheet \f$ \frac{\partial\ominus}{\partial q_1} {}^1X_0 = - \frac{\partial\ominus}{\partial q_0} \f$
     template <ArgumentPosition arg, class ConfigL_t, class ConfigR_t, class JacobianOut_t>
     void dDifference_impl (const Eigen::MatrixBase<ConfigL_t> & q0,
                            const Eigen::MatrixBase<ConfigR_t> & q1,
-                           const Eigen::MatrixBase<JacobianOut_t>& J) const
+                           const Eigen::MatrixBase<JacobianOut_t> & J) const
     {
-      ConstQuaternionMap_t p0 (q0.derived().template tail<4>().data());
-      ConstQuaternionMap_t p1 (q1.derived().template tail<4>().data());
-      typename SE3::Matrix3 R0 (p0.matrix()),
-                            R1 (p1.matrix());
-      SE3 M (  SE3(R0, q0.derived().template head<3>()).inverse()
-             * SE3(R1, q1.derived().template head<3>()));
+      typedef typename SE3::Vector3 Vector3;
+      typedef typename SE3::Matrix3 Matrix3;
+
+      ConstQuaternionMap_t quat0 (q0.derived().template tail<4>().data());
+      assert(quaternion::isNormalized(quat0,RealScalar(PINOCCHIO_DEFAULT_QUATERNION_NORM_TOLERANCE_VALUE)));
+      ConstQuaternionMap_t quat1 (q1.derived().template tail<4>().data());
+      assert(quaternion::isNormalized(quat1,RealScalar(PINOCCHIO_DEFAULT_QUATERNION_NORM_TOLERANCE_VALUE)));
+      
+      Matrix3 R0(quat0.matrix()), R1 (quat1.matrix());
+      assert(isUnitary(R0)); assert(isUnitary(R1));
+      
+      const SE3 M (  SE3(R0, q0.template head<3>()).inverse()
+                   * SE3(R1, q1.template head<3>()));
 
       if (arg == ARG0) {
         JacobianMatrix_t J1;
         Jlog6 (M, J1);
 
-        typename SE3::Vector3 p1_p0 (  q1.derived().template head<3>()
-                                     - q0.derived().template head<3>());
+        const Vector3 p1_p0 = R1.transpose()*(q1.template head<3>() - q0.template head<3>());
 
-        JacobianOut_t& J0 = PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J);
-        J0.template topLeftCorner <3,3> ().noalias() = - M.rotation().transpose();
-        J0.template topRightCorner<3,3> ().noalias() = R1.transpose() * skew (p1_p0) * R0;
-        J0.template bottomLeftCorner <3,3> ().setZero();
-        J0.template bottomRightCorner<3,3> ().noalias() = - M.rotation().transpose();
+        JacobianOut_t & J0 = PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J);
+        J0.template bottomRightCorner<3,3> ().noalias() = J0.template topLeftCorner <3,3> ().noalias() = - M.rotation().transpose();
+        J0.template topRightCorner<3,3> ().noalias() = skew(p1_p0) * M.rotation().transpose(); // = R1.T * skew(q1_t - q0_t) * R0;
+        J0.template bottomLeftCorner<3,3> ().setZero();
         J0.applyOnTheLeft(J1);
-      } else if (arg == ARG1) {
+      }
+      else if (arg == ARG1) {
         Jlog6 (M, J);
       }
     }
@@ -477,6 +584,7 @@ namespace pinocchio
     {
       ConfigOut_t & out = PINOCCHIO_EIGEN_CONST_CAST(ConfigOut_t,qout);
       ConstQuaternionMap_t quat(q.derived().template tail<4>().data());
+      assert(quaternion::isNormalized(quat,RealScalar(PINOCCHIO_DEFAULT_QUATERNION_NORM_TOLERANCE_VALUE)));
       QuaternionMap_t res_quat (out.template tail<4>().data());
       
       using internal::if_then_else;
@@ -490,7 +598,7 @@ namespace pinocchio
       const Scalar dot_product = res_quat.dot(quat);
       for(Eigen::DenseIndex k = 0; k < 4; ++k)
       {
-        res_quat.coeffs().coeffRef(k) = if_then_else(dot_product < 0,
+        res_quat.coeffs().coeffRef(k) = if_then_else(internal::LT, dot_product, Scalar(0),
                                                      -res_quat.coeffs().coeff(k),
                                                       res_quat.coeffs().coeff(k));
       }
@@ -498,6 +606,7 @@ namespace pinocchio
       // Norm of qs might be epsilon-different to 1, so M1.rotation might be epsilon-different to a rotation matrix.
       // It is then safer to re-normalized after converting M1.rotation to quaternion.
       quaternion::firstOrderNormalize(res_quat);
+      assert(quaternion::isNormalized(res_quat,RealScalar(PINOCCHIO_DEFAULT_QUATERNION_NORM_TOLERANCE_VALUE)));
     }
     
     template <class Config_t, class Jacobian_t>
@@ -509,10 +618,12 @@ namespace pinocchio
       typedef typename PINOCCHIO_EIGEN_PLAIN_TYPE(Config_t) ConfigPlainType;
       typedef typename PINOCCHIO_EIGEN_PLAIN_TYPE(Jacobian_t) JacobianPlainType;
       typedef typename ConfigPlainType::Scalar Scalar;
+
       Jacobian_t & Jout = PINOCCHIO_EIGEN_CONST_CAST(Jacobian_t,J);
       Jout.setZero();
       
       ConstQuaternionMap_t quat_map(q.derived().template tail<4>().data());
+      assert(quaternion::isNormalized(quat_map,RealScalar(PINOCCHIO_DEFAULT_QUATERNION_NORM_TOLERANCE_VALUE)));
       Jout.template topLeftCorner<3,3>() = quat_map.toRotationMatrix();
 //      Jexp3(quat,Jout.template bottomRightCorner<4,3>());
       
@@ -539,28 +650,122 @@ namespace pinocchio
     template <class Config_t, class Tangent_t, class JacobianOut_t>
     static void dIntegrate_dq_impl(const Eigen::MatrixBase<Config_t >  & /*q*/,
                                    const Eigen::MatrixBase<Tangent_t>  & v,
-                                   const Eigen::MatrixBase<JacobianOut_t>& J)
+                                   const Eigen::MatrixBase<JacobianOut_t>& J,
+                                   const AssignmentOperatorType op=SETTO)
     {
       JacobianOut_t & Jout = PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J);
-      Jout = exp6(MotionRef<const Tangent_t>(v.derived())).toDualActionMatrix().transpose();
+
+      switch(op)
+      {
+        case SETTO:
+          Jout = exp6(MotionRef<const Tangent_t>(v.derived())).toDualActionMatrix().transpose();
+          break;
+        case ADDTO:
+          Jout += exp6(MotionRef<const Tangent_t>(v.derived())).toDualActionMatrix().transpose();
+          break;
+        case RMTO:
+          Jout -= exp6(MotionRef<const Tangent_t>(v.derived())).toDualActionMatrix().transpose();
+          break;
+        default:
+          assert(false && "Wrong Op requesed value");
+          break;
+      }
     }
 
     template <class Config_t, class Tangent_t, class JacobianOut_t>
     static void dIntegrate_dv_impl(const Eigen::MatrixBase<Config_t >  & /*q*/,
                                    const Eigen::MatrixBase<Tangent_t>  & v,
-                                   const Eigen::MatrixBase<JacobianOut_t>& J)
+                                   const Eigen::MatrixBase<JacobianOut_t>& J,
+                                   const AssignmentOperatorType op=SETTO)
     {
-      Jexp6(MotionRef<const Tangent_t>(v.derived()), J.derived());
+      switch(op)
+      {
+        case SETTO:
+          Jexp6<SETTO>(MotionRef<const Tangent_t>(v.derived()), J.derived());
+          break;
+        case ADDTO:
+          Jexp6<ADDTO>(MotionRef<const Tangent_t>(v.derived()), J.derived());
+          break;
+        case RMTO:
+          Jexp6<RMTO>(MotionRef<const Tangent_t>(v.derived()), J.derived());
+          break;
+        default:
+          assert(false && "Wrong Op requesed value");
+          break;
+      }
     }
 
-    // interpolate_impl use default implementation.
-    // template <class ConfigL_t, class ConfigR_t, class ConfigOut_t>
-    // static void interpolate_impl(const Eigen::MatrixBase<ConfigL_t> & q0,
-                                 // const Eigen::MatrixBase<ConfigR_t> & q1,
-                                 // const Scalar& u,
-                                 // const Eigen::MatrixBase<ConfigOut_t>& qout)
-    // {
-    // }
+    template <class Config_t, class Tangent_t, class JacobianIn_t, class JacobianOut_t>
+    void dIntegrateTransport_dq_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                     const Eigen::MatrixBase<Tangent_t> & v,
+                                     const Eigen::MatrixBase<JacobianIn_t> & Jin,
+                                     const Eigen::MatrixBase<JacobianOut_t> & J_out) const
+    {
+      JacobianOut_t & Jout = PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J_out);
+      Eigen::Matrix<Scalar,6,6> Jtmp6;
+      Jtmp6 = exp6(MotionRef<const Tangent_t>(v.derived())).toDualActionMatrix().transpose();
+      
+      Jout.template topRows<3>().noalias()
+      = Jtmp6.template topLeftCorner<3,3>() * Jin.template topRows<3>();
+      Jout.template topRows<3>().noalias()
+      += Jtmp6.template topRightCorner<3,3>() * Jin.template bottomRows<3>();
+      Jout.template bottomRows<3>().noalias()
+      = Jtmp6.template bottomRightCorner<3,3>() * Jin.template bottomRows<3>();
+    }
+
+    template <class Config_t, class Tangent_t, class JacobianIn_t, class JacobianOut_t>
+    void dIntegrateTransport_dv_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                     const Eigen::MatrixBase<Tangent_t> & v,
+                                     const Eigen::MatrixBase<JacobianIn_t> & Jin,
+                                     const Eigen::MatrixBase<JacobianOut_t> & J_out) const
+    {
+      JacobianOut_t & Jout = PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J_out);
+      Eigen::Matrix<Scalar,6,6> Jtmp6;
+      Jexp6<SETTO>(MotionRef<const Tangent_t>(v.derived()), Jtmp6);
+
+      Jout.template topRows<3>().noalias()
+      = Jtmp6.template topLeftCorner<3,3>() * Jin.template topRows<3>();
+      Jout.template topRows<3>().noalias()
+      += Jtmp6.template topRightCorner<3,3>() * Jin.template bottomRows<3>();
+      Jout.template bottomRows<3>().noalias()
+      = Jtmp6.template bottomRightCorner<3,3>() * Jin.template bottomRows<3>();
+    }
+
+
+    template <class Config_t, class Tangent_t, class Jacobian_t>
+    void dIntegrateTransport_dq_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                     const Eigen::MatrixBase<Tangent_t> & v,
+                                     const Eigen::MatrixBase<Jacobian_t> & J_out) const
+    {
+      Jacobian_t & Jout = PINOCCHIO_EIGEN_CONST_CAST(Jacobian_t,J_out);
+      Eigen::Matrix<Scalar,6,6> Jtmp6;
+      Jtmp6 = exp6(MotionRef<const Tangent_t>(v.derived())).toDualActionMatrix().transpose();
+
+      //Aliasing
+      Jout.template topRows<3>()
+      = Jtmp6.template topLeftCorner<3,3>() * Jout.template topRows<3>();
+      Jout.template topRows<3>().noalias()
+      += Jtmp6.template topRightCorner<3,3>() * Jout.template bottomRows<3>();
+      Jout.template bottomRows<3>()
+      = Jtmp6.template bottomRightCorner<3,3>() * Jout.template bottomRows<3>();
+    }
+
+    template <class Config_t, class Tangent_t, class Jacobian_t>
+    void dIntegrateTransport_dv_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                     const Eigen::MatrixBase<Tangent_t> & v,
+                                     const Eigen::MatrixBase<Jacobian_t> & J_out) const
+    {
+      Jacobian_t & Jout = PINOCCHIO_EIGEN_CONST_CAST(Jacobian_t,J_out);
+      Eigen::Matrix<Scalar,6,6> Jtmp6;
+      Jexp6<SETTO>(MotionRef<const Tangent_t>(v.derived()), Jtmp6);
+
+      Jout.template topRows<3>()
+      = Jtmp6.template topLeftCorner<3,3>() * Jout.template topRows<3>();
+      Jout.template topRows<3>().noalias()
+      += Jtmp6.template topRightCorner<3,3>() * Jout.template bottomRows<3>();
+      Jout.template bottomRows<3>()
+      = Jtmp6.template bottomRightCorner<3,3>() * Jout.template bottomRows<3>();
+    }
 
     template <class ConfigL_t, class ConfigR_t>
     static Scalar squaredDistance_impl(const Eigen::MatrixBase<ConfigL_t> & q0,
@@ -604,4 +809,4 @@ namespace pinocchio
 
 } // namespace pinocchio
 
-#endif // ifndef __pinocchio_special_euclidean_operation_hpp__
+#endif // ifndef __pinocchio_multibody_liegroup_special_euclidean_operation_hpp__
