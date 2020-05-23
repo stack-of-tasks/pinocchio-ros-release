@@ -1,4 +1,4 @@
-From 60fd2946916e00d87d5e3cc07b5b8ecd6e621cc8 Mon Sep 17 00:00:00 2001
+From 5603be4cd4ca8bbc7656b1db172dad677d98afae Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Sat, 11 Apr 2020 12:05:36 +0100
 Subject: [PATCH] Set libdir, disable unit tests
