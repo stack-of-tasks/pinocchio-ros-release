@@ -1,7 +1,7 @@
-From b9d79de7e8c08036c8a3e24025ea94f6f61c98c0 Mon Sep 17 00:00:00 2001
+From 42ebba19a3a66d35d56a548b96b4563d0c88cf8a Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Sat, 11 Apr 2020 12:05:36 +0100
-Subject: [PATCH] Set libdir, disable unit tests
+Subject: [PATCH 1/2] Set libdir, disable unit tests
 
 ---
  CMakeLists.txt | 2 ++
