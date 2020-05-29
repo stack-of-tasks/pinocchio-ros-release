@@ -1,3 +1,26 @@
+## pinocchio (kinetic) - 2.4.5-1
+
+The packages in the `pinocchio` repository were released into the `kinetic` distro by running `/home/wxm/.local/bin/bloom-release -r kinetic pinocchio` on `Fri, 29 May 2020 21:44:17 -0000`
+
+The `pinocchio` package was released.
+
+Version of package(s) in repository `pinocchio`:
+
+- upstream repository: https://github.com/stack-of-tasks/pinocchio.git
+- release repository: https://github.com/ipab-slmc/pinocchio_catkin-release.git
+- rosdistro version: `2.4.0-2`
+- old version: `2.4.0-2`
+- new version: `2.4.5-1`
+
+Versions of tools used:
+
+- bloom version: `0.9.7`
+- catkin_pkg version: `0.4.20`
+- rosdep version: `0.19.0`
+- rosdistro version: `0.8.2`
+- vcstools version: `0.1.42`
+
+
 ## pinocchio (noetic) - 2.4.5-4
 
 The packages in the `pinocchio` repository were released into the `noetic` distro by running `/home/wxm/.local/bin/bloom-release -r noetic pinocchio` on `Tue, 26 May 2020 14:32:06 -0000`
