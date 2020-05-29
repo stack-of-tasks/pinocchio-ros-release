@@ -1,7 +1,7 @@
-From ddb3665079ada69fb7053247af79750c7615e135 Mon Sep 17 00:00:00 2001
+From 92e17b013b1133ca6af2c6cafd2c2ddc73b815bd Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Sat, 11 Apr 2020 11:54:29 +0100
-Subject: [PATCH 2/2] Disable unit tests for buildfarm release
+Subject: [PATCH 2/3] Disable unit tests for buildfarm release
 
 ---
  CMakeLists.txt | 1 +
