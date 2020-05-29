@@ -146,7 +146,8 @@ namespace pinocchio
   }
   
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl>
-  inline int ModelTpl<Scalar,Options,JointCollectionTpl>::
+  inline typename ModelTpl<Scalar,Options,JointCollectionTpl>::FrameIndex
+  ModelTpl<Scalar,Options,JointCollectionTpl>::
   addJointFrame(const JointIndex & joint_index,
                 int previous_frame_index)
   {
@@ -176,7 +177,8 @@ namespace pinocchio
   }
 
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl>
-  inline int ModelTpl<Scalar,Options,JointCollectionTpl>::
+  inline typename ModelTpl<Scalar,Options,JointCollectionTpl>::FrameIndex
+  ModelTpl<Scalar,Options,JointCollectionTpl>::
   addBodyFrame(const std::string & body_name,
                const JointIndex  & parentJoint,
                const SE3         & body_placement,
@@ -192,7 +194,7 @@ namespace pinocchio
   }
   
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl>
-  inline typename ModelTpl<Scalar,Options,JointCollectionTpl>::JointIndex
+  inline typename ModelTpl<Scalar,Options,JointCollectionTpl>::FrameIndex
   ModelTpl<Scalar,Options,JointCollectionTpl>::
   getBodyId(const std::string & name) const
   {
@@ -233,8 +235,8 @@ namespace pinocchio
     = std::find_if(frames.begin()
                    ,frames.end()
                    ,details::FilterFrame(name, type));
-    assert(it != frames.end() && "Frame not found");
-    assert((std::find_if( boost::next(it), frames.end(), details::FilterFrame(name, type)) == frames.end())
+    assert(((it == frames.end()) ||
+            (std::find_if( boost::next(it), frames.end(), details::FilterFrame(name, type)) == frames.end()))
         && "Several frames match the filter");
     return FrameIndex(it - frames.begin());
   }
@@ -248,24 +250,19 @@ namespace pinocchio
   }
 
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl>
-  inline int ModelTpl<Scalar,Options,JointCollectionTpl>::
+  inline typename ModelTpl<Scalar,Options,JointCollectionTpl>::FrameIndex
+  ModelTpl<Scalar,Options,JointCollectionTpl>::
   addFrame(const Frame & frame)
   {
-    // Check if the frame.name exists
-    if(existFrame(frame.name))
+    // Check if the frame.name exists with the same type
+    if(existFrame(frame.name,frame.type))
     {
-      FrameIndex frame_id = getFrameId(frame.name);
-      if(frames[frame_id] == frame)
-        return (int)frame_id;
-      else
-        return -1;
+      return getFrameId(frame.name,frame.type);
     }
-    else // does not exist, so add the Frame to the kinematic tree
-    {
-      frames.push_back(frame);
-      nframes++;
-      return nframes - 1;
-    }
+    // else: we must add a new frames to the current stack
+    frames.push_back(frame);
+    nframes++;
+    return FrameIndex(nframes - 1);
   }
   
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl>
