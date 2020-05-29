@@ -88,7 +88,7 @@ ENDIF(NOT BUILD_WITH_HPP_FCL_PYTHON_BINDINGS)
 
 LIST(APPEND HEADERS ${${PROJECT_NAME}_PYTHON_HEADERS})
 
-# Headers of the python binding
+# Headers of the Python bindings
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/bindings/python")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/bindings/python/spatial")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/bindings/python/multibody")
@@ -102,7 +102,7 @@ MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/bindings/python/
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/bindings/python/utils")
 SYMLINK_AND_INSTALL_HEADERS("${${PROJECT_NAME}_PYTHON_HEADERS}" "bindings/python")
 
-# Headers of the python parser
+# Headers of the Python parser
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/parsers/python")
 SYMLINK_AND_INSTALL_HEADERS("${${PROJECT_NAME}_PARSER_PYTHON_HEADERS}" "")
 
@@ -114,6 +114,11 @@ SET(${PYWRAP}_HEADERS ${${PROJECT_NAME}_PYTHON_HEADERS})
 IF(BUILD_PYTHON_INTERFACE)
   ADD_LIBRARY(${PYWRAP} SHARED ${${PYWRAP}_SOURCES} ${${PYWRAP}_HEADERS})
   ADD_DEPENDENCIES(python ${PYWRAP})
+
+  # Do not report:
+  #  -Wconversion as the BOOST_PYTHON_FUNCTION_OVERLOADS implicitly converts.
+  #  -Wcomment as latex equations have multi-line comments.
+  TARGET_COMPILE_OPTIONS(${PYWRAP} PRIVATE -Wno-conversion -Wno-comment)
 
   SET_TARGET_PROPERTIES(${PYWRAP} PROPERTIES VERSION ${PROJECT_VERSION})
   IF(BUILD_WITH_COMMIT_VERSION)
@@ -142,7 +147,7 @@ IF(BUILD_PYTHON_INTERFACE)
   ENDIF(CPPADCG_FOUND)
 
   IF(APPLE)
-    # We need to change the extension for python bindings
+    # We need to change the extension for Python bindings
     SET_TARGET_PROPERTIES(${PYWRAP} PROPERTIES SUFFIX ".so")
   ENDIF(APPLE)
 
@@ -180,6 +185,7 @@ IF(BUILD_PYTHON_INTERFACE)
     base_visualizer.py
     gepetto_visualizer.py
     meshcat_visualizer.py
+    panda3d_visualizer.py
     )
 
   FOREACH(python ${PYTHON_VISUALIZE_FILES})
