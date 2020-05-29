@@ -1,15 +1,21 @@
 //
-// Copyright (c) 2016-2019 CNRS, INRIA
+// Copyright (c) 2016-2020 CNRS INRIA
 //
 
 #ifndef __pinocchio_math_quaternion_hpp__
 #define __pinocchio_math_quaternion_hpp__
 
+#ifndef PINOCCHIO_DEFAULT_QUATERNION_NORM_TOLERANCE_VALUE
+  #define PINOCCHIO_DEFAULT_QUATERNION_NORM_TOLERANCE_VALUE 1e-8
+#endif
+
 #include "pinocchio/math/fwd.hpp"
 #include "pinocchio/math/comparison-operators.hpp"
+#include "pinocchio/math/matrix.hpp"
 #include "pinocchio/math/sincos.hpp"
-#include <boost/type_traits.hpp>
+#include "pinocchio/utils/static-if.hpp"
 
+#include <boost/type_traits.hpp>
 #include <Eigen/Geometry>
 
 namespace pinocchio
@@ -33,10 +39,10 @@ namespace pinocchio
       const Scalar innerprod = q1.dot(q2);
       Scalar theta = math::acos(innerprod);
       static const Scalar PI_value = PI<Scalar>();
-      
-      if(innerprod < 0)
-        return PI_value - theta;
-      
+
+      theta = internal::if_then_else(internal::LT, innerprod, Scalar(0),
+                                     PI_value - theta,
+                                     theta);
       return theta;
     }
     
@@ -123,6 +129,9 @@ namespace pinocchio
     
     namespace internal
     {
+
+      template<typename Scalar, bool value = boost::is_floating_point<Scalar>::value>
+      struct quaternionbase_assign_impl;
       
       template<Eigen::DenseIndex i>
       struct quaternionbase_assign_impl_if_t_negative
@@ -165,7 +174,7 @@ namespace pinocchio
       };
       
       template<typename Scalar>
-      struct quaternionbase_assign_impl
+      struct quaternionbase_assign_impl<Scalar, true>
       {
         template<typename Matrix3, typename QuaternionDerived>
         static inline void run(Eigen::QuaternionBase<QuaternionDerived> & q,
@@ -174,7 +183,7 @@ namespace pinocchio
           using pinocchio::math::sqrt;
           
           Scalar t = mat.trace();
-          if (t > Scalar(0))
+          if (t > Scalar(0.))
             quaternionbase_assign_impl_if_t_positive::run(t,q,mat);
           else
           {
@@ -202,6 +211,22 @@ namespace pinocchio
     {
       internal::quaternionbase_assign_impl<typename Matrix3::Scalar>::run(PINOCCHIO_EIGEN_CONST_CAST(D,quat),
                                                                           R.derived());
+    }
+
+    ///
+    /// \brief Check whether the input quaternion is Normalized within the given precision.
+    ///
+    /// \param[in] quat Input quaternion
+    /// \param[in] prec Required precision
+    ///
+    /// \returns true if quat is normalized within the precision prec.
+    ///
+    template<typename Quaternion>
+    inline bool isNormalized(const Eigen::QuaternionBase<Quaternion> & quat,
+                             const typename Quaternion::Coefficients::RealScalar & prec =
+                             Eigen::NumTraits< typename Quaternion::Coefficients::RealScalar >::dummy_precision())
+    {
+      return pinocchio::isNormalized(quat.coeffs(),prec);
     }
       
   } // namespace quaternion

@@ -1,14 +1,13 @@
 //
-// Copyright (c) 2016-2018 CNRS
+// Copyright (c) 2016-2020 CNRS INRIA
 //
 
-#ifndef __pinocchio_vector_space_operation_hpp__
-#define __pinocchio_vector_space_operation_hpp__
-
-#include <stdexcept>
+#ifndef __pinocchio_multibody_liegroup_vector_space_operation_hpp__
+#define __pinocchio_multibody_liegroup_vector_space_operation_hpp__
 
 #include "pinocchio/multibody/liegroup/liegroup-base.hpp"
 
+#include <stdexcept>
 #include <boost/integer/static_min_max.hpp>
 
 namespace pinocchio
@@ -80,10 +79,10 @@ namespace pinocchio
     template <ArgumentPosition arg, class ConfigL_t, class ConfigR_t, class JacobianOut_t>
     void dDifference_impl (const Eigen::MatrixBase<ConfigL_t> &,
                            const Eigen::MatrixBase<ConfigR_t> &,
-                           const Eigen::MatrixBase<JacobianOut_t>& J) const
+                           const Eigen::MatrixBase<JacobianOut_t> & J) const
     {
       if (arg == ARG0)
-        PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J).noalias() = - JacobianMatrix_t::Identity();
+        PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J) = -JacobianMatrix_t::Identity();
       else if (arg == ARG1)
         PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J).setIdentity();
     }
@@ -104,20 +103,82 @@ namespace pinocchio
     }
 
     template <class Config_t, class Tangent_t, class JacobianOut_t>
-    static void dIntegrate_dq_impl(const Eigen::MatrixBase<Config_t >  & /*q*/,
-                                   const Eigen::MatrixBase<Tangent_t>  & /*v*/,
-                                   const Eigen::MatrixBase<JacobianOut_t>& J)
+    static void dIntegrate_dq_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                   const Eigen::MatrixBase<Tangent_t> & /*v*/,
+                                   const Eigen::MatrixBase<JacobianOut_t> & J,
+                                   const AssignmentOperatorType op=SETTO)
     {
-      PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J).setIdentity();
+      Eigen::MatrixBase<JacobianOut_t>& Jout = PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J);
+      switch(op)
+        {
+        case SETTO:
+          Jout.setIdentity();
+          break;
+        case ADDTO:
+          Jout.diagonal().array() += Scalar(1);
+          break;
+        case RMTO:
+          Jout.diagonal().array() -= Scalar(1);
+          break;
+        default:
+          assert(false && "Wrong Op requesed value");
+          break;
+        }
     }
 
     template <class Config_t, class Tangent_t, class JacobianOut_t>
-    static void dIntegrate_dv_impl(const Eigen::MatrixBase<Config_t >  & /*q*/,
-                                   const Eigen::MatrixBase<Tangent_t>  & /*v*/,
-                                   const Eigen::MatrixBase<JacobianOut_t>& J)
+    static void dIntegrate_dv_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                   const Eigen::MatrixBase<Tangent_t> & /*v*/,
+                                   const Eigen::MatrixBase<JacobianOut_t> & J,
+                                   const AssignmentOperatorType op=SETTO)
     {
-      PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J).setIdentity();
+      Eigen::MatrixBase<JacobianOut_t>& Jout = PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,J);
+      switch(op)
+        {
+        case SETTO:
+          Jout.setIdentity();
+          break;
+        case ADDTO:
+          Jout.diagonal().array() += Scalar(1);
+          break;
+        case RMTO:
+          Jout.diagonal().array() -= Scalar(1);
+          break;
+        default:
+          assert(false && "Wrong Op requesed value");
+          break;
+        }
     }
+
+
+    template <class Config_t, class Tangent_t, class JacobianIn_t, class JacobianOut_t>
+    void dIntegrateTransport_dq_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                     const Eigen::MatrixBase<Tangent_t> & /*v*/,
+                                     const Eigen::MatrixBase<JacobianIn_t> & Jin,
+                                     const Eigen::MatrixBase<JacobianOut_t> & Jout) const
+    {
+      PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,Jout) = Jin;
+    }
+
+    template <class Config_t, class Tangent_t, class JacobianIn_t, class JacobianOut_t>
+    void dIntegrateTransport_dv_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                     const Eigen::MatrixBase<Tangent_t> & /*v*/,
+                                     const Eigen::MatrixBase<JacobianIn_t> & Jin,
+                                     const Eigen::MatrixBase<JacobianOut_t> & Jout) const
+    {
+      PINOCCHIO_EIGEN_CONST_CAST(JacobianOut_t,Jout) = Jin;
+    }
+
+    template <class Config_t, class Tangent_t, class Jacobian_t>
+    void dIntegrateTransport_dq_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                     const Eigen::MatrixBase<Tangent_t> & /*v*/,
+                                     const Eigen::MatrixBase<Jacobian_t> & /*J*/) const {}
+
+    template <class Config_t, class Tangent_t, class Jacobian_t>
+    void dIntegrateTransport_dv_impl(const Eigen::MatrixBase<Config_t > & /*q*/,
+                                     const Eigen::MatrixBase<Tangent_t> & /*v*/,
+                                     const Eigen::MatrixBase<Jacobian_t> & /*J*/) const {}
+
 
 
     // template <class ConfigL_t, class ConfigR_t>
@@ -162,4 +223,4 @@ namespace pinocchio
 
 } // namespace pinocchio
 
-#endif // ifndef __pinocchio_vector_space_operation_hpp__
+#endif // ifndef __pinocchio_multibody_liegroup_vector_space_operation_hpp__
