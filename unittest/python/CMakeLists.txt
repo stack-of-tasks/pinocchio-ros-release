@@ -12,6 +12,7 @@ SET(${PROJECT_NAME}_PYTHON_TESTS
   bindings_dynamics
   bindings_force
   bindings_frame
+  bindings_kinematics
   bindings_inertia
   bindings_spatial
   bindings_joint_composite
@@ -23,6 +24,7 @@ SET(${PROJECT_NAME}_PYTHON_TESTS
   rpy
   utils
   serialization
+  version
   )
 
 IF(HPP_FCL_FOUND)

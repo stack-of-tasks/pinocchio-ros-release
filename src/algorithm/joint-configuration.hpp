@@ -1,13 +1,11 @@
 //
-// Copyright (c) 2016-2019 CNRS INRIA
+// Copyright (c) 2016-2020 CNRS INRIA
 //
 
-#ifndef __pinocchio_joint_configuration_hpp__
-#define __pinocchio_joint_configuration_hpp__
+#ifndef __pinocchio_algorithm_joint_configuration_hpp__
+#define __pinocchio_algorithm_joint_configuration_hpp__
 
-#include "pinocchio/multibody/fwd.hpp"
 #include "pinocchio/multibody/model.hpp"
-
 #include "pinocchio/multibody/liegroup/liegroup.hpp"
 
 namespace pinocchio
@@ -285,7 +283,8 @@ namespace pinocchio
                   const Eigen::MatrixBase<ConfigVectorType> & q,
                   const Eigen::MatrixBase<TangentVectorType> & v,
                   const Eigen::MatrixBase<JacobianMatrixType> & J,
-                  const ArgumentPosition arg);
+                  const ArgumentPosition arg,
+                  const AssignmentOperatorType op=SETTO);
 
   /**
    *
@@ -312,7 +311,151 @@ namespace pinocchio
                   const Eigen::MatrixBase<JacobianMatrixType> & J,
                   const ArgumentPosition arg)
   {
-    dIntegrate<LieGroupMap,Scalar,Options,JointCollectionTpl,ConfigVectorType,TangentVectorType,JacobianMatrixType>(model, q.derived(), v.derived(), PINOCCHIO_EIGEN_CONST_CAST(JacobianMatrixType,J),arg);
+    dIntegrate<LieGroupMap,Scalar,Options,JointCollectionTpl,ConfigVectorType,TangentVectorType,JacobianMatrixType>(model, q.derived(), v.derived(), PINOCCHIO_EIGEN_CONST_CAST(JacobianMatrixType,J),arg,SETTO);
+  }
+
+
+  /**
+   *
+   * @brief   Computes the Jacobian of a small variation of the configuration vector or the tangent vector into the tangent space at identity.
+   *
+   * @details This jacobian has to be interpreted in terms of Lie group, not vector space: as such,
+   *          it is expressed in the tangent space only, not the configuration space.
+   *          Calling \f$ f(q, v) \f$ the integrate function, these jacobians satisfy the following relationships in the
+   *          tangent space:
+   *           - Jacobian relative to q: \f$ f(q \oplus \delta q, v) \ominus f(q, v) = J_q(q, v) \delta q + o(\delta q)\f$.
+   *           - Jacobian relative to v: \f$ f(q, v + \delta v) \ominus f(q, v) = J_v(q, v) \delta v + o(\delta v)\f$.
+   *
+   * @param[in]  model   Model of the kinematic tree on which the integration operation is performed.
+   * @param[in]  q            Initial configuration (size model.nq)
+   * @param[in]  v            Joint velocity (size model.nv)
+   * @param[out] J            Jacobian of the Integrate operation, either with respect to q or v (size model.nv x model.nv).
+   * @param[in]  arg        Argument (either q or v) with respect to which the differentiation is performed.
+   *
+   */
+  template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType, typename TangentVectorType, typename JacobianMatrixType>
+  void dIntegrate(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
+                  const Eigen::MatrixBase<ConfigVectorType> & q,
+                  const Eigen::MatrixBase<TangentVectorType> & v,
+                  const Eigen::MatrixBase<JacobianMatrixType> & J,
+                  const ArgumentPosition arg,
+                  const AssignmentOperatorType op)
+  {
+    dIntegrate<LieGroupMap,Scalar,Options,JointCollectionTpl,ConfigVectorType,TangentVectorType,JacobianMatrixType>(model, q.derived(), v.derived(), PINOCCHIO_EIGEN_CONST_CAST(JacobianMatrixType,J),arg,op);
+  }
+
+  /**
+   *
+   * @brief   Transport a matrix from the terminal to the originate tangent space of the integrate operation, with respect to the configuration or the velocity arguments.
+   *
+   * @details This function performs the parallel transportation of an input matrix whose columns are expressed in the tangent space of the integrated element \f$ q \oplus v \f$,
+   *          to the tangent space at \f$ q \f$.
+   *          In other words, this functions transforms a tangent vector expressed at \f$ q \oplus v \f$ to a tangent vector expressed at \f$ q \f$, considering that the change of configuration between
+   *          \f$ q \oplus v \f$ and \f$ q \f$ may alter the value of this tangent vector.
+   *          A typical example of parallel transportation is the action operated by a rigid transformation \f$ M \in \text{SE}(3)\f$ on a spatial velocity \f$ v \in \text{se}(3)\f$.
+   *          In the context of configuration spaces assimilated as vectorial spaces, this operation corresponds to Identity.
+   *          For Lie groups, its corresponds to the canonical vector field transportation.
+   *
+   * @param[in]  model   Model of the kinematic tree on which the integration operation is performed.
+   * @param[in]  q            Initial configuration (size model.nq)
+   * @param[in]  v            Joint velocity (size model.nv)
+   * @param[out] Jin        Input matrix (number of rows = model.nv).
+   * @param[out] Jout      Output matrix (same size as Jin).
+   * @param[in]  arg        Argument (either ARG0 for q or ARG1 for v) with respect to which the differentation is performed.
+   *
+   */
+  template<typename LieGroup_t, typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType, typename TangentVectorType, typename JacobianMatrixType1, typename JacobianMatrixType2>
+  void dIntegrateTransport(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
+                           const Eigen::MatrixBase<ConfigVectorType> & q,
+                           const Eigen::MatrixBase<TangentVectorType> & v,
+                           const Eigen::MatrixBase<JacobianMatrixType1> & Jin,
+                           const Eigen::MatrixBase<JacobianMatrixType2> & Jout,
+                           const ArgumentPosition arg);
+
+  /**
+   *
+   * @brief   Transport a matrix from the terminal to the originate tangent space of the integrate operation, with respect to the configuration or the velocity arguments.
+   *
+   * @details This function performs the parallel transportation of an input matrix whose columns are expressed in the tangent space of the integrated element \f$ q \oplus v \f$,
+   *          to the tangent space at \f$ q \f$.
+   *          In other words, this functions transforms a tangent vector expressed at \f$ q \oplus v \f$ to a tangent vector expressed at \f$ q \f$, considering that the change of configuration between
+   *          \f$ q \oplus v \f$ and \f$ q \f$ may alter the value of this tangent vector.
+   *          A typical example of parallel transportation is the action operated by a rigid transformation \f$ M \in \text{SE}(3)\f$ on a spatial velocity \f$ v \in \text{se}(3)\f$.
+   *          In the context of configuration spaces assimilated as vectorial spaces, this operation corresponds to Identity.
+   *          For Lie groups, its corresponds to the canonical vector field transportation.
+   *
+   * @param[in]  model   Model of the kinematic tree on which the integration operation is performed.
+   * @param[in]  q            Initial configuration (size model.nq)
+   * @param[in]  v            Joint velocity (size model.nv)
+   * @param[out] Jin        Input matrix (number of rows = model.nv).
+   * @param[out] Jout      Output matrix (same size as Jin).
+   * @param[in]  arg        Argument (either ARG0 for q or ARG1 for v) with respect to which the differentation is performed.
+   *
+  */
+  template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType, typename TangentVectorType, typename JacobianMatrixType1, typename JacobianMatrixType2>
+  void dIntegrateTransport(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
+                           const Eigen::MatrixBase<ConfigVectorType> & q,
+                           const Eigen::MatrixBase<TangentVectorType> & v,
+                           const Eigen::MatrixBase<JacobianMatrixType1> & Jin,
+                           const Eigen::MatrixBase<JacobianMatrixType2> & Jout,
+                           const ArgumentPosition arg)
+  {
+    dIntegrateTransport<LieGroupMap,Scalar,Options,JointCollectionTpl,ConfigVectorType,TangentVectorType,JacobianMatrixType1,JacobianMatrixType2>(model, q.derived(), v.derived(), Jin.derived(), PINOCCHIO_EIGEN_CONST_CAST(JacobianMatrixType2,Jout),arg);
+  }
+
+  /**
+   *
+   * @brief   Transport in place a matrix from the terminal to the originate tangent space of the integrate operation, with respect to the configuration or the velocity arguments.
+   *
+   * @details This function performs the parallel transportation of an input matrix whose columns are expressed in the tangent space of the integrated element \f$ q \oplus v \f$,
+   *          to the tangent space at \f$ q \f$.
+   *          In other words, this functions transforms a tangent vector expressed at \f$ q \oplus v \f$ to a tangent vector expressed at \f$ q \f$, considering that the change of configuration between
+   *          \f$ q \oplus v \f$ and \f$ q \f$ may alter the value of this tangent vector.
+   *          A typical example of parallel transportation is the action operated by a rigid transformation \f$ M \in \text{SE}(3)\f$ on a spatial velocity \f$ v \in \text{se}(3)\f$.
+   *          In the context of configuration spaces assimilated as vectorial spaces, this operation corresponds to Identity.
+   *          For Lie groups, its corresponds to the canonical vector field transportation.
+   *
+   * @param[in]     model   Model of the kinematic tree on which the integration operation is performed.
+   * @param[in]     q            Initial configuration (size model.nq)
+   * @param[in]     v            Joint velocity (size model.nv)
+   * @param[in,out] J            Input/output matrix (number of rows = model.nv).
+   * @param[in]     arg        Argument (either ARG0 for q or ARG1 for v) with respect to which the differentation is performed.
+   *
+  */
+  template<typename LieGroup_t, typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType, typename TangentVectorType, typename JacobianMatrixType>
+  void dIntegrateTransport(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
+                           const Eigen::MatrixBase<ConfigVectorType> & q,
+                           const Eigen::MatrixBase<TangentVectorType> & v,
+                           const Eigen::MatrixBase<JacobianMatrixType> & J,
+                           const ArgumentPosition arg);
+
+  /**
+   *
+   * @brief   Transport in place a matrix from the terminal to the originate tangent space of the integrate operation, with respect to the configuration or the velocity arguments.
+   *
+   * @details This function performs the parallel transportation of an input matrix whose columns are expressed in the tangent space of the integrated element \f$ q \oplus v \f$,
+   *          to the tangent space at \f$ q \f$.
+   *          In other words, this functions transforms a tangent vector expressed at \f$ q \oplus v \f$ to a tangent vector expressed at \f$ q \f$, considering that the change of configuration between
+   *          \f$ q \oplus v \f$ and \f$ q \f$ may alter the value of this tangent vector.
+   *          A typical example of parallel transportation is the action operated by a rigid transformation \f$ M \in \text{SE}(3)\f$ on a spatial velocity \f$ v \in \text{se}(3)\f$.
+   *          In the context of configuration spaces assimilated as vectorial spaces, this operation corresponds to Identity.
+   *          For Lie groups, its corresponds to the canonical vector field transportation.
+   *
+   * @param[in]     model   Model of the kinematic tree on which the integration operation is performed.
+   * @param[in]     q            Initial configuration (size model.nq)
+   * @param[in]     v            Joint velocity (size model.nv)
+   * @param[in,out] J            Input/output matrix (number of rows = model.nv).
+   * @param[in]     arg        Argument (either ARG0 for q or ARG1 for v) with respect to which the differentation is performed.
+   *
+  */
+  template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType, typename TangentVectorType, typename JacobianMatrixType>
+  void dIntegrateTransport(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
+                           const Eigen::MatrixBase<ConfigVectorType> & q,
+                           const Eigen::MatrixBase<TangentVectorType> & v,
+                           const Eigen::MatrixBase<JacobianMatrixType> & J,
+                           const ArgumentPosition arg)
+  {
+    dIntegrateTransport<LieGroupMap,Scalar,Options,JointCollectionTpl,ConfigVectorType,TangentVectorType,JacobianMatrixType>(model, q.derived(), v.derived(), PINOCCHIO_EIGEN_CONST_CAST(JacobianMatrixType,J),arg);
   }
 
   /**
@@ -822,5 +965,4 @@ namespace pinocchio
 /* --- Details -------------------------------------------------------------------- */
 #include "pinocchio/algorithm/joint-configuration.hxx"
 
-#endif // ifndef __pinocchio_joint_configuration_hpp__
-
+#endif // ifndef __pinocchio_algorithm_joint_configuration_hpp__
