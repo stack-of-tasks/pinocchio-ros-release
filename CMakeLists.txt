@@ -17,6 +17,8 @@ SET(CXX_DISABLE_WERROR True)
 SET(CMAKE_VERBOSE_MAKEFILE True)
 SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
 SET(BUILD_TESTING OFF CACHE BOOL "") # Disable unit tests for buildfarm release to avoid memory exhaustion
+set(CMAKE_BUILD_TYPE "Release")
+set(PYTHON_EXECUTABLE "python3") # specify python3 for Debian Buster
 
 # Check if the submodule cmake have been initialized
 IF(NOT EXISTS "${CMAKE_SOURCE_DIR}/cmake/base.cmake")
