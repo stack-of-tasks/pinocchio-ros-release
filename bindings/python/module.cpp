@@ -21,7 +21,7 @@
 namespace bp = boost::python;
 using namespace pinocchio::python;
 
-BOOST_PYTHON_MODULE(libpinocchio_pywrap)
+BOOST_PYTHON_MODULE(pinocchio_pywrap)
 {
   bp::docstring_options module_docstring_options(true,true,false);
   
@@ -59,6 +59,7 @@ BOOST_PYTHON_MODULE(libpinocchio_pywrap)
   exposeExplog();
   exposeRpy();
   exposeSkew();
+  exposeLieGroups();
 
   bp::enum_< ::pinocchio::ReferenceFrame >("ReferenceFrame")
   .value("WORLD",::pinocchio::WORLD)
