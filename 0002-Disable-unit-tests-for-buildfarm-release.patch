@@ -1,4 +1,4 @@
-From 92e17b013b1133ca6af2c6cafd2c2ddc73b815bd Mon Sep 17 00:00:00 2001
+From bcdac147e7aa94f464fde49409558637abe24fc1 Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Sat, 11 Apr 2020 11:54:29 +0100
 Subject: [PATCH 2/3] Disable unit tests for buildfarm release
@@ -8,7 +8,7 @@ Subject: [PATCH 2/3] Disable unit tests for buildfarm release
  1 file changed, 1 insertion(+)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 4995b74..33b92d9 100644
+index 6cd908e..27d4ebe 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -16,6 +16,7 @@ SET(PROJECT_USE_KEYWORD_LINK_LIBRARIES TRUE)
