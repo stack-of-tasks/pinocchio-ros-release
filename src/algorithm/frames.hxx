@@ -37,7 +37,7 @@ namespace pinocchio
   inline const typename DataTpl<Scalar,Options,JointCollectionTpl>::SE3 &
   updateFramePlacement(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
                        DataTpl<Scalar,Options,JointCollectionTpl> & data,
-                       const typename ModelTpl<Scalar,Options,JointCollectionTpl>::FrameIndex frame_id)
+                       const FrameIndex frame_id)
   {
     assert(model.check(data) && "data is not consistent with model.");
     
@@ -65,7 +65,7 @@ namespace pinocchio
   inline MotionTpl<Scalar, Options>
   getFrameVelocity(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
                    const DataTpl<Scalar,Options,JointCollectionTpl> & data,
-                   const typename ModelTpl<Scalar,Options,JointCollectionTpl>::FrameIndex frame_id,
+                   const FrameIndex frame_id,
                    const ReferenceFrame rf)
   {
     assert(model.check(data) && "data is not consistent with model.");
@@ -94,7 +94,7 @@ namespace pinocchio
   inline MotionTpl<Scalar, Options>
   getFrameAcceleration(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
                        const DataTpl<Scalar,Options,JointCollectionTpl> & data,
-                       const typename ModelTpl<Scalar,Options,JointCollectionTpl>::FrameIndex frame_id,
+                       const FrameIndex frame_id,
                        const ReferenceFrame rf)
   {
     assert(model.check(data) && "data is not consistent with model.");
@@ -123,7 +123,7 @@ namespace pinocchio
   inline MotionTpl<Scalar, Options>
   getFrameClassicalAcceleration(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
                                 const DataTpl<Scalar,Options,JointCollectionTpl> & data,
-                                const typename ModelTpl<Scalar,Options,JointCollectionTpl>::FrameIndex frame_id,
+                                const FrameIndex frame_id,
                                 const ReferenceFrame rf)
   {
     assert(model.check(data) && "data is not consistent with model.");
@@ -140,13 +140,13 @@ namespace pinocchio
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename Matrix6xLike>
   inline void getFrameJacobian(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
                                DataTpl<Scalar,Options,JointCollectionTpl> & data,
-                               const typename ModelTpl<Scalar,Options,JointCollectionTpl>::FrameIndex frame_id,
+                               const FrameIndex frame_id,
                                const ReferenceFrame rf,
                                const Eigen::MatrixBase<Matrix6xLike> & J)
   {
 
-    PINOCCHIO_CHECK_INPUT_ARGUMENT(J.rows() == 6);
-    PINOCCHIO_CHECK_INPUT_ARGUMENT(J.cols() == model.nv);
+    PINOCCHIO_CHECK_ARGUMENT_SIZE(J.rows(), 6);
+    PINOCCHIO_CHECK_ARGUMENT_SIZE(J.cols(), model.nv);
     assert(model.check(data) && "data is not consistent with model.");
     
     typedef ModelTpl<Scalar,Options,JointCollectionTpl> Model;
@@ -173,7 +173,7 @@ namespace pinocchio
                                    const Eigen::MatrixBase<Matrix6xLike> & J)
   {
     assert(model.check(data) && "data is not consistent with model.");
-    PINOCCHIO_CHECK_INPUT_ARGUMENT(q.size() == model.nq, "The configuration vector is not of right size");
+    PINOCCHIO_CHECK_ARGUMENT_SIZE(q.size(), model.nq, "The configuration vector is not of right size");
 
     typedef ModelTpl<Scalar,Options,JointCollectionTpl> Model;
     typedef DataTpl<Scalar,Options,JointCollectionTpl> Data;
@@ -241,7 +241,7 @@ namespace pinocchio
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename Matrix6xLike>
   void getFrameJacobianTimeVariation(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
                                      DataTpl<Scalar,Options,JointCollectionTpl> & data,
-                                     const typename ModelTpl<Scalar,Options,JointCollectionTpl>::FrameIndex frame_id,
+                                     const FrameIndex frame_id,
                                      const ReferenceFrame rf,
                                      const Eigen::MatrixBase<Matrix6xLike> & dJ)
   {
