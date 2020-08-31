@@ -1,4 +1,4 @@
-From dc852d7d0db7e9c889bd7021edd7c8f7cdbb06b4 Mon Sep 17 00:00:00 2001
+From 4d8563a8345d4438da68500d4b8f5f7764190409 Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Mon, 31 Aug 2020 13:52:05 +0100
 Subject: [PATCH 3/3] Set CMAKE_BUILD_TYPE and PYTHON_EXECUTABLE
