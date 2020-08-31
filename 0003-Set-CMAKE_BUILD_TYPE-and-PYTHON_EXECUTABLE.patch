@@ -1,0 +1,25 @@
+From dc852d7d0db7e9c889bd7021edd7c8f7cdbb06b4 Mon Sep 17 00:00:00 2001
+From: Wolfgang Merkt <w.merkt@gmail.com>
+Date: Mon, 31 Aug 2020 13:52:05 +0100
+Subject: [PATCH 3/3] Set CMAKE_BUILD_TYPE and PYTHON_EXECUTABLE
+
+---
+ CMakeLists.txt | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 63d0051..77885fd 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -17,6 +17,8 @@ SET(CXX_DISABLE_WERROR True)
+ SET(CMAKE_VERBOSE_MAKEFILE True)
+ SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
+ SET(BUILD_TESTING OFF CACHE BOOL "") # Disable unit tests for buildfarm release to avoid memory exhaustion
++set(CMAKE_BUILD_TYPE "Release")
++set(PYTHON_EXECUTABLE "python3") # specify python3 for Debian Buster
+ 
+ # Check if the submodule cmake have been initialized
+ IF(NOT EXISTS "${CMAKE_SOURCE_DIR}/cmake/base.cmake")
+-- 
+2.17.1
+
