@@ -1,0 +1,25 @@
+From 9011ce9fbfd01877902f772fa76b37b09eb71bc3 Mon Sep 17 00:00:00 2001
+From: Wolfgang Merkt <w.merkt@gmail.com>
+Date: Sun, 6 Sep 2020 15:42:36 +0100
+Subject: [PATCH 3/3] Use FORCE to turn off BUILD_TESTING
+
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 63d0051..d518125 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -16,7 +16,7 @@ SET(PROJECT_USE_KEYWORD_LINK_LIBRARIES TRUE)
+ SET(CXX_DISABLE_WERROR True)
+ SET(CMAKE_VERBOSE_MAKEFILE True)
+ SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
+-SET(BUILD_TESTING OFF CACHE BOOL "") # Disable unit tests for buildfarm release to avoid memory exhaustion
++SET(BUILD_TESTING OFF CACHE BOOL "" FORCE) # Disable unit tests for buildfarm release to avoid memory exhaustion
+ 
+ # Check if the submodule cmake have been initialized
+ IF(NOT EXISTS "${CMAKE_SOURCE_DIR}/cmake/base.cmake")
+-- 
+2.17.1
+
