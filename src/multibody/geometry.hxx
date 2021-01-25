@@ -7,13 +7,20 @@
 
 #include "pinocchio/multibody/model.hpp"
 
+#if BOOST_VERSION / 100 % 1000 >= 60
+  #include <boost/bind/bind.hpp>
+  #include <boost/utility.hpp>
+#else
+  #include <boost/bind.hpp>
+#endif
+
 /// @cond DEV
 
 namespace pinocchio
 {
 // Avoid deprecated warning of collisionObjects
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+PINOCCHIO_COMPILER_DIAGNOSTIC_PUSH
+PINOCCHIO_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
   inline GeometryData::GeometryData(const GeometryModel & geom_model)
   : oMg(geom_model.ngeoms)
   , activeCollisionPairs(geom_model.collisionPairs.size(), true)
@@ -69,7 +76,7 @@ namespace pinocchio
   {}
 
   inline GeometryData::~GeometryData() {}
-#pragma GCC diagnostic pop
+PINOCCHIO_COMPILER_DIAGNOSTIC_POP
 
   template<typename S2, int O2, template<typename,int> class JointCollectionTpl>
   GeomIndex GeometryModel::addGeometryObject(const GeometryObject & object,
@@ -94,7 +101,9 @@ namespace pinocchio
 
   inline GeomIndex GeometryModel::getGeometryId(const std::string & name) const
   {
-
+#if BOOST_VERSION / 100 % 1000 >= 60
+    using namespace boost::placeholders;
+#endif
     GeometryObjectVector::const_iterator it
     = std::find_if(geometryObjects.begin(),
                    geometryObjects.end(),
@@ -105,6 +114,9 @@ namespace pinocchio
 
   inline bool GeometryModel::existGeometryName(const std::string & name) const
   {
+#if BOOST_VERSION / 100 % 1000 >= 60
+    using namespace boost::placeholders;
+#endif
     return std::find_if(geometryObjects.begin(),
                         geometryObjects.end(),
                         boost::bind(&GeometryObject::name, _1) == name) != geometryObjects.end();

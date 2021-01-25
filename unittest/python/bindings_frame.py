@@ -24,7 +24,7 @@ class TestFrameBindings(PinocchioTestCase):
         f.type = pin.FrameType.BODY
         self.assertTrue(f.type == pin.FrameType.BODY)
 
-    def test_name_get_set(self):    
+    def test_name_get_set(self):
         f = self.model.frames[self.frame_idx]
         self.assertTrue(f.name == self.frame_name)
         f.name = 'new_hip_frame'
@@ -43,6 +43,30 @@ class TestFrameBindings(PinocchioTestCase):
         new_placement = pin.SE3.Random()
         f.placement = new_placement
         self.assertTrue(np.allclose(f.placement.homogeneous, new_placement.homogeneous))
+
+    def test_frame_equality(self):
+        M = pin.SE3.Random()
+        frame1 = pin.Frame("name", 1, 2, M, pin.OP_FRAME)
+        frame2 = pin.Frame("name", 1, 2, M, pin.OP_FRAME)
+        frame3 = pin.Frame("othername", 3, 4, pin.SE3.Random(), pin.BODY)
+
+        self.assertTrue(frame1 == frame2)
+        self.assertFalse(frame1 != frame2)
+        self.assertTrue(frame1 != frame3)
+        self.assertFalse(frame1 == frame3)
+
+    def test_pickle(self):
+        import pickle
+
+        frame = pin.Frame("name", 1, 2, pin.SE3.Random(), pin.OP_FRAME)
+        filename = "frame.pickle"
+        with open(filename, 'wb') as f:
+            pickle.dump(frame, f)
+
+        with open(filename, 'rb') as f:
+            frame_copy = pickle.load(f)
+
+        self.assertEqual(frame, frame_copy)
 
     def test_getters(self):
         data = self.model.createData()
@@ -76,6 +100,32 @@ class TestFrameBindings(PinocchioTestCase):
         a = pin.getFrameClassicalAcceleration(self.model, data, self.frame_idx, pin.ReferenceFrame.LOCAL)
         a = pin.getFrameClassicalAcceleration(self.model, data, self.frame_idx, pin.ReferenceFrame.WORLD)
         a = pin.getFrameClassicalAcceleration(self.model, data, self.frame_idx, pin.ReferenceFrame.LOCAL_WORLD_ALIGNED)
+
+    def test_frame_algo(self):
+        model = self.model
+        data = model.createData()
+
+        q = pin.neutral(model)
+        v = np.random.rand((model.nv))
+        frame_id = self.frame_idx
+
+        J1 = pin.computeFrameJacobian(model,data,q,frame_id)
+        J2 = pin.computeFrameJacobian(model,data,q,frame_id,pin.LOCAL)
+
+        self.assertApprox(J1,J2)
+        data2 = model.createData()
+
+        pin.computeJointJacobians(model,data2,q)
+        J3 = pin.getFrameJacobian(model,data2,frame_id,pin.LOCAL)
+        self.assertApprox(J1,J3)
+
+        dJ1 = pin.frameJacobianTimeVariation(model,data,q,v,frame_id,pin.LOCAL)
+
+        data3 = model.createData()
+        pin.computeJointJacobiansTimeVariation(model,data3,q,v)
+
+        dJ2 = pin.getFrameJacobianTimeVariation(model,data3,frame_id,pin.LOCAL)
+        self.assertApprox(dJ1,dJ2)
 
 if __name__ == '__main__':
     unittest.main()

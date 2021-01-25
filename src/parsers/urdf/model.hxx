@@ -20,7 +20,7 @@ namespace pinocchio
   {
     namespace details
     {
-      typedef double urdf_value_type;
+      typedef double urdf_scalar_type;
 
       template<typename _Scalar, int Options>
       class UrdfVisitorBaseTpl {
@@ -53,7 +53,10 @@ namespace pinocchio
               const VectorConstRef& max_effort,
               const VectorConstRef& max_velocity,
               const VectorConstRef& min_config,
-              const VectorConstRef& max_config) = 0;
+              const VectorConstRef& max_config,
+              const VectorConstRef& friction,
+              const VectorConstRef& damping
+                                       ) = 0;
 
           virtual void addFixedJointAndBody(
               const FrameIndex & parentFrameId,
@@ -127,60 +130,67 @@ namespace pinocchio
               const VectorConstRef& max_effort,
               const VectorConstRef& max_velocity,
               const VectorConstRef& min_config,
-              const VectorConstRef& max_config)
+              const VectorConstRef& max_config,
+              const VectorConstRef& friction,
+              const VectorConstRef& damping)
           {
-            JointIndex idx;
+            JointIndex joint_id;
             const Frame & frame = model.frames[parentFrameId];
 
             switch (type) {
               case Base::FLOATING:
-                idx = model.addJoint(frame.parent,
-                    typename JointCollection::JointModelFreeFlyer(),
-                    frame.placement * placement,
-                    joint_name,
-                    max_effort,max_velocity,min_config,max_config
-                    );
+                joint_id = model.addJoint(frame.parent,
+                                          typename JointCollection::JointModelFreeFlyer(),
+                                          frame.placement * placement,
+                                          joint_name,
+                                          max_effort,max_velocity,min_config,max_config,
+                                          friction,damping
+                                          );
                 break;
               case Base::REVOLUTE:
-                idx = addJoint<
+                joint_id = addJoint<
                   typename JointCollection::JointModelRX,
                   typename JointCollection::JointModelRY,
                   typename JointCollection::JointModelRZ,
                   typename JointCollection::JointModelRevoluteUnaligned> (
                       axis, frame, placement, joint_name,
-                      max_effort, max_velocity, min_config, max_config);
+                      max_effort, max_velocity, min_config, max_config,
+                      friction, damping);
                 break;
               case Base::CONTINUOUS:
-                idx = addJoint<
+                joint_id = addJoint<
                   typename JointCollection::JointModelRUBX,
                   typename JointCollection::JointModelRUBY,
                   typename JointCollection::JointModelRUBZ,
-                  typename JointCollection::JointModelRevoluteUnboundedUnaligned> (
+                  typename JointCollection::JointModelRevoluteUnboundedUnaligned>(
                       axis, frame, placement, joint_name,
-                      max_effort, max_velocity, min_config, max_config);
+                      max_effort, max_velocity, min_config, max_config,
+                      friction, damping);
                 break;
               case Base::PRISMATIC:
-                idx = addJoint<
+                joint_id = addJoint<
                   typename JointCollection::JointModelPX,
                   typename JointCollection::JointModelPY,
                   typename JointCollection::JointModelPZ,
                   typename JointCollection::JointModelPrismaticUnaligned> (
                       axis, frame, placement, joint_name,
-                      max_effort, max_velocity, min_config, max_config);
+                      max_effort, max_velocity, min_config, max_config,
+                      friction, damping);
                 break;
               case Base::PLANAR:
-                idx = model.addJoint(frame.parent,
+                joint_id = model.addJoint(frame.parent,
                     typename JointCollection::JointModelPlanar(),
                     frame.placement * placement,
                     joint_name,
-                    max_effort,max_velocity,min_config,max_config
+                    max_effort,max_velocity,min_config,max_config,
+                    friction, damping
                     );
                 break;
               default:
                 PINOCCHIO_CHECK_INPUT_ARGUMENT(false, "The joint type is not correct.");
             };
 
-            FrameIndex jointFrameId = model.addJointFrame(idx, (int)parentFrameId);
+            FrameIndex jointFrameId = model.addJointFrame(joint_id, (int)parentFrameId);
             appendBodyToJoint(jointFrameId, Y, SE3::Identity(), body_name);
           }
 
@@ -270,7 +280,9 @@ namespace pinocchio
               const VectorConstRef& max_effort,
               const VectorConstRef& max_velocity,
               const VectorConstRef& min_config,
-              const VectorConstRef& max_config)
+              const VectorConstRef& max_config,
+              const VectorConstRef& friction,
+              const VectorConstRef& damping)
           {
             CartesianAxis axisType = extractCartesianAxis(axis);
             switch (axisType)
@@ -278,25 +290,29 @@ namespace pinocchio
               case AXIS_X:
                 return model.addJoint(frame.parent, TypeX(),
                     frame.placement * placement, joint_name,
-                    max_effort,max_velocity,min_config,max_config);
+                    max_effort,max_velocity,min_config,max_config,
+                    friction, damping);
                 break;
 
               case AXIS_Y:
                 return model.addJoint(frame.parent, TypeY(),
                     frame.placement * placement, joint_name,
-                    max_effort,max_velocity,min_config,max_config);
+                    max_effort,max_velocity,min_config,max_config,
+                    friction, damping);
                 break;
 
               case AXIS_Z:
                 return model.addJoint(frame.parent, TypeZ(),
                     frame.placement * placement, joint_name,
-                    max_effort,max_velocity,min_config,max_config);
+                    max_effort,max_velocity,min_config,max_config,
+                    friction, damping);
                 break;
 
               case AXIS_UNALIGNED:
                 return model.addJoint(frame.parent, TypeUnaligned (axis.normalized()),
                     frame.placement * placement, joint_name,
-                    max_effort,max_velocity,min_config,max_config);
+                    max_effort,max_velocity,min_config,max_config,
+                    friction, damping);
                 break;
               default:
                 PINOCCHIO_CHECK_INPUT_ARGUMENT(false, "The axis type of the joint is of wrong type.");
@@ -362,7 +378,7 @@ namespace pinocchio
     {
       details::UrdfVisitorWithRootJoint<Scalar, Options, JointCollectionTpl> visitor (model, root_joint);
       if (verbose) visitor.log = &std::cout;
-      parseRootTree(filename, visitor);
+      details::parseRootTree(filename, visitor);
       return model;
     }
 
@@ -374,7 +390,7 @@ namespace pinocchio
     {
       details::UrdfVisitor<Scalar, Options, JointCollectionTpl> visitor (model);
       if (verbose) visitor.log = &std::cout;
-      parseRootTree(filename, visitor);
+      details::parseRootTree(filename, visitor);
       return model;
     }
     
@@ -387,7 +403,7 @@ namespace pinocchio
     {
       details::UrdfVisitorWithRootJoint<Scalar, Options, JointCollectionTpl> visitor (model, rootJoint);
       if (verbose) visitor.log = &std::cout;
-      parseRootTreeFromXML(xmlStream, visitor);
+      details::parseRootTreeFromXML(xmlStream, visitor);
       return model;
     }
     
@@ -399,7 +415,7 @@ namespace pinocchio
     {
       details::UrdfVisitor<Scalar, Options, JointCollectionTpl> visitor (model);
       if (verbose) visitor.log = &std::cout;
-      parseRootTreeFromXML(xmlStream, visitor);
+      details::parseRootTreeFromXML(xmlStream, visitor);
       return model;
     }
 
@@ -413,7 +429,7 @@ namespace pinocchio
       PINOCCHIO_CHECK_INPUT_ARGUMENT(urdfTree != NULL);
       details::UrdfVisitorWithRootJoint<Scalar, Options, JointCollectionTpl> visitor (model, rootJoint);
       if (verbose) visitor.log = &std::cout;
-      parseRootTree(urdfTree.get(), visitor);
+      details::parseRootTree(urdfTree.get(), visitor);
       return model;
     }
 
@@ -426,7 +442,7 @@ namespace pinocchio
       PINOCCHIO_CHECK_INPUT_ARGUMENT(urdfTree != NULL);
       details::UrdfVisitor<Scalar, Options, JointCollectionTpl> visitor (model);
       if (verbose) visitor.log = &std::cout;
-      parseRootTree(urdfTree.get(), visitor);
+      details::parseRootTree(urdfTree.get(), visitor);
       return model;
     }
 
@@ -441,7 +457,7 @@ namespace pinocchio
       PINOCCHIO_CHECK_INPUT_ARGUMENT(urdfTree != NULL);
       details::UrdfVisitorWithRootJoint<Scalar, Options, JointCollectionTpl> visitor (model, rootJoint);
       if (verbose) visitor.log = &std::cout;
-      parseRootTree(urdfTree.get(), visitor);
+      details::parseRootTree(urdfTree.get(), visitor);
       return model;
     }
 
@@ -454,7 +470,7 @@ namespace pinocchio
       PINOCCHIO_CHECK_INPUT_ARGUMENT(urdfTree != NULL);
       details::UrdfVisitor<Scalar, Options, JointCollectionTpl> visitor (model);
       if (verbose) visitor.log = &std::cout;
-      parseRootTree(urdfTree.get(), visitor);
+      details::parseRootTree(urdfTree.get(), visitor);
       return model;
     }
 #endif
