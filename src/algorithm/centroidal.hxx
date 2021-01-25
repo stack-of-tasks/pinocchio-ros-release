@@ -51,6 +51,8 @@ namespace pinocchio
     
     data.hg = data.h[0];
     data.hg.angular() += data.hg.linear().cross(data.com[0]);
+
+    data.vcom[0].noalias() = data.hg.linear()/data.mass[0];
     
     return data.hg;
   }
@@ -100,6 +102,8 @@ namespace pinocchio
     data.dhg = data.f[0];
     data.dhg.angular() += data.dhg.linear().cross(data.com[0]);
 
+    data.vcom[0].noalias() = data.hg.linear()/data.mass[0];
+    
     return data.dhg;
   }
   
@@ -325,9 +329,9 @@ namespace pinocchio
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType, typename TangentVectorType>
   inline const typename DataTpl<Scalar,Options,JointCollectionTpl>::Matrix6x &
   computeCentroidalMapTimeVariation(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
-                                        DataTpl<Scalar,Options,JointCollectionTpl> & data,
-                                        const Eigen::MatrixBase<ConfigVectorType> & q,
-                                        const Eigen::MatrixBase<TangentVectorType> & v)
+                                    DataTpl<Scalar,Options,JointCollectionTpl> & data,
+                                    const Eigen::MatrixBase<ConfigVectorType> & q,
+                                    const Eigen::MatrixBase<TangentVectorType> & v)
   {
     assert(model.check(data) && "data is not consistent with model.");
     PINOCCHIO_CHECK_ARGUMENT_SIZE(q.size(), model.nq, "The configuration vector is not of right size");
