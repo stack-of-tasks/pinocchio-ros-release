@@ -1,20 +1,23 @@
 //
-// Copyright (c) 2017-2019 CNRS INRIA
+// Copyright (c) 2017-2020 CNRS INRIA
 //
 
 #ifndef __pinocchio_macros_hpp__
 #define __pinocchio_macros_hpp__
 
-#if __cplusplus >= 201103L
-  #define PINOCCHIO_WITH_CXX11_SUPPORT
+// On Windows, __cplusplus is not necessarily set to the C++ version being used.
+// See https://docs.microsoft.com/fr-fr/cpp/build/reference/zc-cplusplus?view=vs-2019 for further information.
+
+#if (__cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703))
+  #define PINOCCHIO_WITH_CXX17_SUPPORT
 #endif
 
-#if __cplusplus >= 201403L
+#if (__cplusplus >= 201403L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201403))
   #define PINOCCHIO_WITH_CXX14_SUPPORT
 #endif
 
-#if __cplusplus >= 201703L
-  #define PINOCCHIO_WITH_CXX17_SUPPORT
+#if (__cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1600))
+  #define PINOCCHIO_WITH_CXX11_SUPPORT
 #endif
 
 #define PINOCCHIO_STRING_LITERAL(string) #string
@@ -72,7 +75,22 @@ namespace pinocchio
   }
 }
 
-// Handle explicitely the GCC borring warning: 'anonymous variadic macros were introduced in C++11'
+/// \brief macros for pragma push/pop/ignore deprecated warnings
+#if defined(__GNUC__) || defined(__clang__)
+# define PINOCCHIO_COMPILER_DIAGNOSTIC_PUSH  _Pragma("GCC diagnostic push")
+# define PINOCCHIO_COMPILER_DIAGNOSTIC_POP   _Pragma("GCC diagnostic pop")
+# define PINOCCHIO_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS  _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
+#elif defined (WIN32)
+# define PINOCCHIO_COMPILER_DIAGNOSTIC_PUSH  _Pragma("warning(push)")
+# define PINOCCHIO_COMPILER_DIAGNOSTIC_POP   _Pragma("warning(pop)")
+# define PINOCCHIO_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS  _Pragma("warning(disable : 4996)")
+#else
+# define PINOCCHIO_COMPILER_DIAGNOSTIC_PUSH
+# define PINOCCHIO_COMPILER_DIAGNOSTIC_POP
+# define PINOCCHIO_COMPILER_DIAGNOSTIC_IGNORED_DEPRECECATED_DECLARATIONS
+#endif // __GNUC__
+
+// Handle explicitely the GCC boring warning: 'anonymous variadic macros were introduced in C++11'
 #include <exception>
 #include <stdexcept>
 
@@ -120,7 +138,7 @@ namespace pinocchio
       oss << message << std::endl; \
     else \
       oss << size_literal << " is different from " << expected_size_literal << std::endl; \
-    PINOCCHIO_THROW(true, std::invalid_argument, oss.str()); \
+    PINOCCHIO_THROW(false, std::invalid_argument, oss.str()); \
   }
 
 #define _PINOCCHIO_CHECK_ARGUMENT_SIZE_3(size, expected_size, message) \
