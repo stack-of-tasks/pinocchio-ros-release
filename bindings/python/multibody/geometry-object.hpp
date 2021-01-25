@@ -7,6 +7,7 @@
 
 #include <boost/python.hpp>
 #include <eigenpy/memory.hpp>
+#include <eigenpy/eigen-to-python.hpp>
 
 #include "pinocchio/multibody/geometry.hpp"
 
@@ -22,9 +23,9 @@ namespace pinocchio
     : public boost::python::def_visitor< GeometryObjectPythonVisitor >
     {
       typedef GeometryObject::CollisionGeometryPtr CollisionGeometryPtr;
-      
+
       template<class PyClass>
-      void visit(PyClass& cl) const 
+      void visit(PyClass& cl) const
       {
         cl
         .def(bp::init<std::string,FrameIndex,JointIndex,CollisionGeometryPtr,SE3,
@@ -45,11 +46,8 @@ namespace pinocchio
               bp::args("self","otherGeometryObject"),
               "Copy constructor"
               ))
-        .add_property("meshScale",
-                      bp::make_getter(&GeometryObject::meshScale,
-                                      bp::return_value_policy<bp::return_by_value>()),
-                      bp::make_setter(&GeometryObject::meshScale),
-                      "Scaling parameter of the mesh.")
+        .def_readwrite("meshScale",&GeometryObject::meshScale,
+                       "Scaling parameter of the mesh.")
         .add_property("meshColor",
                       bp::make_getter(&GeometryObject::meshColor,
                                       bp::return_value_policy<bp::return_by_value>()),
@@ -65,13 +63,13 @@ namespace pinocchio
                        "Index of the parent frame.")
         .def_readwrite("placement",&GeometryObject::placement,
                        "Position of geometry object in parent joint's frame.")
-        .def_readonly("meshPath", &GeometryObject::meshPath,
-                      "Path to the mesh file.")
-        .def_readonly("overrideMaterial", &GeometryObject::overrideMaterial,
-                      "Boolean that tells whether material information is stored inside the given GeometryObject.")
-        .def_readonly("meshTexturePath", &GeometryObject::meshTexturePath,
-                      "Path to the mesh texture file.")
-        
+        .def_readwrite("meshPath", &GeometryObject::meshPath,
+                       "Path to the mesh file.")
+        .def_readwrite("overrideMaterial", &GeometryObject::overrideMaterial,
+                       "Boolean that tells whether material information is stored inside the given GeometryObject.")
+        .def_readwrite("meshTexturePath", &GeometryObject::meshTexturePath,
+                       "Path to the mesh texture file.")
+
         .def(bp::self == bp::self)
         .def(bp::self != bp::self)
 
@@ -100,7 +98,7 @@ namespace pinocchio
                                    )
         .def(GeometryObjectPythonVisitor())
         ;
-        
+
         bp::enum_<GeometryType>("GeometryType")
         .value("VISUAL",VISUAL)
         .value("COLLISION",COLLISION)
@@ -109,7 +107,7 @@ namespace pinocchio
       }
 
     };
-    
+
 
   } // namespace python
 } // namespace pinocchio

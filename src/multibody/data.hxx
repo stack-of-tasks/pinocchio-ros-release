@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015-2019 CNRS INRIA
+// Copyright (c) 2015-2020 CNRS INRIA
 // Copyright (c) 2015 Wandercraft, 86 rue de Paris 91400 Orsay, France.
 //
 
@@ -10,9 +10,6 @@
 #include "pinocchio/multibody/model.hpp"
 #include "pinocchio/utils/string-generator.hpp"
 #include "pinocchio/multibody/liegroup/liegroup-algo.hpp"
-
-#include <boost/bind.hpp>
-#include <boost/utility.hpp>
 
 /// @cond DEV
 
@@ -53,6 +50,7 @@ namespace pinocchio
   , IS(MatrixXs::Zero(6,model.nv))
   , vxI((std::size_t)model.njoints,Inertia::Matrix6::Zero())
   , Ivx((std::size_t)model.njoints,Inertia::Matrix6::Zero())
+  , oinertias((std::size_t)model.njoints,Inertia::Zero())
   , oYcrb((std::size_t)model.njoints,Inertia::Zero())
   , doYcrb((std::size_t)model.njoints,Inertia::Matrix6::Zero())
   , ddq(VectorXs::Zero(model.nv))
@@ -248,6 +246,7 @@ namespace pinocchio
     && data1.IS == data2.IS
     && data1.vxI == data2.vxI
     && data1.Ivx == data2.Ivx
+    && data1.oinertias == data2.oinertias
     && data1.oYcrb == data2.oYcrb
     && data1.doYcrb == data2.doYcrb
     && data1.ddq == data2.ddq
