@@ -1,4 +1,4 @@
-From 85ad21bd7c28c76fc0897b243b3bb419fb7e76c9 Mon Sep 17 00:00:00 2001
+From efa18942b1c5a9cc009e46183babb2e733827d02 Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Fri, 29 May 2020 22:41:42 +0100
 Subject: [PATCH 2/2] Set CONFIG_INSTALL_DIR to share//cmake
@@ -8,7 +8,7 @@ Subject: [PATCH 2/2] Set CONFIG_INSTALL_DIR to share//cmake
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/cmake/package-config.cmake b/cmake/package-config.cmake
-index 76946e5..951b1c0 100644
+index fd9e8e0..188af64 100644
 --- a/cmake/package-config.cmake
 +++ b/cmake/package-config.cmake
 @@ -34,7 +34,7 @@ MACRO(_SETUP_PROJECT_PACKAGE_INIT)
