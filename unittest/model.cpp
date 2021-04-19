@@ -422,13 +422,15 @@ BOOST_AUTO_TEST_CASE(test_buildReducedModel_with_geom)
   {
     const GeometryObject & go1 = humanoid_geometry.geometryObjects[i];
     const GeometryObject & go2 = reduced_humanoid_geometry.geometryObjects[i];
-    BOOST_CHECK(go1.name == go2.name);
-    BOOST_CHECK(go1.geometry == go2.geometry);
-    BOOST_CHECK(go1.meshPath == go2.meshPath);
-    BOOST_CHECK(go1.meshScale == go2.meshScale);
-    BOOST_CHECK(go1.overrideMaterial == go2.overrideMaterial);
-    BOOST_CHECK(go1.meshColor == go2.meshColor);
-    BOOST_CHECK(go1.meshTexturePath == go2.meshTexturePath);
+    BOOST_CHECK_EQUAL(go1.name, go2.name);
+    BOOST_CHECK_EQUAL(go1.geometry, go2.geometry);
+    BOOST_CHECK_EQUAL(go1.meshPath, go2.meshPath);
+    BOOST_CHECK_EQUAL(go1.meshScale, go2.meshScale);
+    BOOST_CHECK_EQUAL(go1.overrideMaterial, go2.overrideMaterial);
+    BOOST_CHECK_EQUAL(go1.meshColor, go2.meshColor);
+    BOOST_CHECK_EQUAL(go1.meshTexturePath, go2.meshTexturePath);
+    BOOST_CHECK_EQUAL(humanoid_model.frames[go1.parentFrame].name,
+                      reduced_humanoid_model.frames[go2.parentFrame].name);
   }
   
   Data data(humanoid_model), reduced_data(reduced_humanoid_model);
@@ -492,6 +494,22 @@ BOOST_AUTO_TEST_CASE(test_buildReducedModel_with_geom)
   {
     BOOST_CHECK(geom_data.oMg[i].isApprox(reduded_geom_data.oMg[i]));
   }
+  
+  // Test other signature
+  std::vector<GeometryModel> full_geometry_models;
+  full_geometry_models.push_back(humanoid_geometry);
+  full_geometry_models.push_back(humanoid_geometry);
+  full_geometry_models.push_back(humanoid_geometry);
+  
+  std::vector<GeometryModel> reduced_geometry_models;
+  
+  Model reduced_humanoid_model_other_sig;
+  buildReducedModel(humanoid_model,full_geometry_models,joints_to_lock,
+                    reference_config_humanoid,reduced_humanoid_model_other_sig,reduced_geometry_models);
+  
+  BOOST_CHECK(reduced_geometry_models[0] == reduced_humanoid_geometry);
+  BOOST_CHECK(reduced_geometry_models[1] == reduced_humanoid_geometry);
+  BOOST_CHECK(reduced_geometry_models[2] == reduced_humanoid_geometry);
 }
 #endif // PINOCCHIO_WITH_HPP_FCL
 

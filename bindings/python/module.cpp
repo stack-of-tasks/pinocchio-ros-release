@@ -12,6 +12,7 @@
 #include "pinocchio/bindings/python/utils/registration.hpp"
 
 #include "pinocchio/bindings/python/utils/std-vector.hpp"
+#include "pinocchio/bindings/python/serialization/serialization.hpp"
 
 #include <eigenpy/eigenpy.hpp>
 
@@ -89,10 +90,16 @@ BOOST_PYTHON_MODULE(pinocchio_pywrap)
   
   exposeAlgorithms();
   exposeParsers();
+  exposeSerialization();
   
-#ifdef PINOCCHIO_WITH_HPP_FCL_PYTHON_BINDINGS
+#ifdef PINOCCHIO_PYTHON_INTERFACE_WITH_HPP_FCL_PYTHON_BINDINGS
   exposeFCL();
-#endif // PINOCCHIO_WITH_HPP_FCL_PYTHON_BINDINGS
+#endif // PINOCCHIO_PYTHON_INTERFACE_WITH_HPP_FCL_PYTHON_BINDINGS
+  
+#ifdef PINOCCHIO_PYTHON_INTERFACE_WITH_OPENMP
+  exposePool();
+  exposeParallelAlgorithms();
+#endif
   
   exposeVersion();
   exposeDependencies();
