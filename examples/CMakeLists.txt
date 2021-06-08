@@ -83,7 +83,7 @@ IF(BUILD_PYTHON_INTERFACE)
     LIST(APPEND ${PROJECT_NAME}_PYTHON_EXAMPLES 
       sample-model-viewer
       display-shapes
-      simulation-inverted-pendulum
+      simulation-pendulum
       )
     IF(BUILD_WITH_URDF_SUPPORT)
       LIST(APPEND ${PROJECT_NAME}_PYTHON_EXAMPLES 
@@ -91,6 +91,12 @@ IF(BUILD_PYTHON_INTERFACE)
         )
     ENDIF(BUILD_WITH_URDF_SUPPORT)
   ENDIF(hpp-fcl_FOUND)
+  
+  IF(BUILD_WITH_OPENMP_SUPPORT)
+    LIST(APPEND ${PROJECT_NAME}_PYTHON_EXAMPLES 
+      run-algo-in-parallel
+      )
+  ENDIF(BUILD_WITH_OPENMP_SUPPORT)
 
   FOREACH(EXAMPLE ${${PROJECT_NAME}_PYTHON_EXAMPLES})
     ADD_PYTHON_UNIT_TEST("example-py-${EXAMPLE}" "examples/${EXAMPLE}.py" "bindings/python")
