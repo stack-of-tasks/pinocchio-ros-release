@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015-2020 CNRS INRIA
+// Copyright (c) 2015-2021 CNRS INRIA
 // Copyright (c) 2015 Wandercraft, 86 rue de Paris 91400 Orsay, France.
 //
 
@@ -95,105 +95,7 @@ namespace pinocchio
       
       typedef typename Model::VectorXs VectorXs;
       
-    protected:
-      
-      struct addJointVisitor0
-      : public boost::static_visitor<Index>
-      {
-        Model & m_model;
-        const JointIndex m_parent_id;
-        const SE3 & m_joint_placement;
-        const std::string & m_joint_name;
-
-        addJointVisitor0(Model & model,
-                         const JointIndex parent_id,
-                         const SE3 & joint_placement,
-                         const std::string & joint_name)
-        : m_model(model)
-        , m_parent_id(parent_id)
-        , m_joint_placement(joint_placement)
-        , m_joint_name(joint_name)
-        {}
-
-        template <typename JointModelDerived>
-        JointIndex operator()(JointModelDerived & jmodel) const
-        {
-          return m_model.addJoint(m_parent_id,jmodel,m_joint_placement,m_joint_name);
-        }
-      }; // struct addJointVisitor0
-
-      struct addJointVisitor1
-      : public addJointVisitor0
-      {
-        using addJointVisitor0::m_model;
-        using addJointVisitor0::m_parent_id;
-        using addJointVisitor0::m_joint_placement;
-        using addJointVisitor0::m_joint_name;
-        
-        const VectorXs & m_max_effort;
-        const VectorXs & m_max_velocity;
-        const VectorXs & m_min_config;
-        const VectorXs & m_max_config;
-
-        addJointVisitor1(Model & model,
-                                  const JointIndex parent_id,
-                                  const SE3 & joint_placement,
-                                  const std::string & joint_name,
-                                  const VectorXs & max_effort,
-                                  const VectorXs & max_velocity,
-                                  const VectorXs & min_config,
-                                  const VectorXs & max_config)
-        : addJointVisitor0(model,parent_id,joint_placement,joint_name)
-        , m_max_effort(max_effort)
-        , m_max_velocity(max_velocity)
-        , m_min_config(min_config)
-        , m_max_config(max_config)
-        {}
-
-        template <typename JointModelDerived>
-        JointIndex operator()(JointModelDerived & jmodel) const
-        {
-          return m_model.addJoint(m_parent_id,jmodel,m_joint_placement,m_joint_name,m_max_effort,m_max_velocity,m_min_config,m_max_config);
-        }
-      }; // struct addJointVisitor1
-      
-      struct addJointVisitor2
-      : public addJointVisitor1
-      {
-        using addJointVisitor1::m_model;
-        using addJointVisitor1::m_parent_id;
-        using addJointVisitor1::m_joint_placement;
-        using addJointVisitor1::m_joint_name;
-        using addJointVisitor1::m_max_effort;
-        using addJointVisitor1::m_max_velocity;
-        using addJointVisitor1::m_min_config;
-        using addJointVisitor1::m_max_config;
-        
-        const VectorXs & m_friction;
-        const VectorXs & m_damping;
-
-        addJointVisitor2(Model & model,
-                         const JointIndex parent_id,
-                         const SE3 & joint_placement,
-                         const std::string & joint_name,
-                         const VectorXs & max_effort,
-                         const VectorXs & max_velocity,
-                         const VectorXs & min_config,
-                         const VectorXs & max_config,
-                         const VectorXs & friction,
-                         const VectorXs & damping)
-        : addJointVisitor1(model,parent_id,joint_placement,joint_name,
-                           max_effort,max_velocity,min_config,max_config)
-        , m_friction(friction)
-        , m_damping(damping)
-        {}
-
-        template <typename JointModelDerived>
-        JointIndex operator()(JointModelDerived & jmodel) const
-        {
-          return m_model.addJoint(m_parent_id,jmodel,m_joint_placement,m_joint_name,m_max_effort,m_max_velocity,m_min_config,m_max_config,m_friction,m_damping);
-        }
-      }; // struct addJointVisitor1
+      BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(addFrame_overload,Model::addFrame,1,2)
       
     public:
 
@@ -289,7 +191,10 @@ namespace pinocchio
         
         .def("existFrame",&Model::existFrame,existFrame_overload(bp::args("self","name","type"),"Returns true if the frame given by its name exists inside the Model with the given type."))
         
-        .def("addFrame",(std::size_t (Model::*)(const Frame &)) &Model::addFrame,bp::args("self","frame"),"Add a frame to the vector of frames.")
+        .def("addFrame",&Model::addFrame,
+             addFrame_overload((bp::arg("self"), bp::arg("frame"), bp::arg("append_inertia") = true),
+                               "Add a frame to the vector of frames. If append_inertia set to True, "
+                               "the inertia value contained in frame will be added to the inertia supported by the parent joint."))
         
         .def("createData",
              &ModelPythonVisitor::createData,bp::arg("self"),
@@ -305,17 +210,16 @@ namespace pinocchio
 
       static JointIndex addJoint0(Model & model,
                                   JointIndex parent_id,
-                                  bp::object jmodel,
+                                  const JointModel & jmodel,
                                   const SE3 & joint_placement,
                                   const std::string & joint_name)
       {
-        JointModelVariant jmodel_variant = bp::extract<JointModelVariant> (jmodel)();
-        return boost::apply_visitor(addJointVisitor0(model,parent_id,joint_placement,joint_name), jmodel_variant);
+        return model.addJoint(parent_id,jmodel,joint_placement,joint_name);
       }
 
       static JointIndex addJoint1(Model & model,
                                   JointIndex parent_id,
-                                  bp::object jmodel,
+                                  const JointModel & jmodel,
                                   const SE3 & joint_placement,
                                   const std::string & joint_name,
                                   const VectorXs & max_effort,
@@ -323,13 +227,13 @@ namespace pinocchio
                                   const VectorXs & min_config,
                                   const VectorXs & max_config)
       {
-        JointModelVariant jmodel_variant = bp::extract<JointModelVariant> (jmodel)();
-        return boost::apply_visitor(addJointVisitor1(model,parent_id,joint_placement,joint_name,max_effort,max_velocity,min_config,max_config), jmodel_variant);
+        return model.addJoint(parent_id,jmodel,joint_placement,joint_name,
+                              max_effort,max_velocity,min_config,max_config);
       }
       
       static JointIndex addJoint2(Model & model,
                                   JointIndex parent_id,
-                                  bp::object jmodel,
+                                  const JointModel & jmodel,
                                   const SE3 & joint_placement,
                                   const std::string & joint_name,
                                   const VectorXs & max_effort,
@@ -339,8 +243,9 @@ namespace pinocchio
                                   const VectorXs & friction,
                                   const VectorXs & damping)
       {
-        JointModelVariant jmodel_variant = bp::extract<JointModelVariant> (jmodel)();
-        return boost::apply_visitor(addJointVisitor2(model,parent_id,joint_placement,joint_name,max_effort,max_velocity,min_config,max_config,friction,damping), jmodel_variant);
+        return model.addJoint(parent_id,jmodel,joint_placement,joint_name,
+                              max_effort,max_velocity,min_config,max_config,
+                              friction,damping);
       }
 
       static Data createData(const Model & model) { return Data(model); }
