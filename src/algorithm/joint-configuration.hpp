@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2020 CNRS INRIA
+// Copyright (c) 2016-2021 CNRS INRIA
 //
 
 #ifndef __pinocchio_algorithm_joint_configuration_hpp__
@@ -350,6 +350,7 @@ namespace pinocchio
    *
    * @details This function performs the parallel transportation of an input matrix whose columns are expressed in the tangent space of the integrated element \f$ q \oplus v \f$,
    *          to the tangent space at \f$ q \f$.
+   *          It performs the product with the Jacobian of integrate by exploiting at best the sparsity of the underlying operations.
    *          In other words, this functions transforms a tangent vector expressed at \f$ q \oplus v \f$ to a tangent vector expressed at \f$ q \f$, considering that the change of configuration between
    *          \f$ q \oplus v \f$ and \f$ q \f$ may alter the value of this tangent vector.
    *          A typical example of parallel transportation is the action operated by a rigid transformation \f$ M \in \text{SE}(3)\f$ on a spatial velocity \f$ v \in \text{se}(3)\f$.
@@ -378,6 +379,7 @@ namespace pinocchio
    *
    * @details This function performs the parallel transportation of an input matrix whose columns are expressed in the tangent space of the integrated element \f$ q \oplus v \f$,
    *          to the tangent space at \f$ q \f$.
+   *          It performs the product with the Jacobian of integrate by exploiting at best the sparsity of the underlying operations.
    *          In other words, this functions transforms a tangent vector expressed at \f$ q \oplus v \f$ to a tangent vector expressed at \f$ q \f$, considering that the change of configuration between
    *          \f$ q \oplus v \f$ and \f$ q \f$ may alter the value of this tangent vector.
    *          A typical example of parallel transportation is the action operated by a rigid transformation \f$ M \in \text{SE}(3)\f$ on a spatial velocity \f$ v \in \text{se}(3)\f$.
@@ -612,6 +614,39 @@ namespace pinocchio
 
   /**
    *
+   * @brief         Check whether a configuration vector is normalized within the given precision provided by prec.
+   *
+   * @param[in]     model      Model of the kinematic tree.
+   * @param[in]     q          Configuration to check (size model.nq).
+   * @param[in]     prec       Precision.
+   *
+   * @return     Whether the configuration is normalized or not, within the given precision.
+   */
+  template<typename LieGroup_t, typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType>
+  inline bool isNormalized(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
+                           const Eigen::MatrixBase<ConfigVectorType> & q,
+                           const Scalar& prec = Eigen::NumTraits<Scalar>::dummy_precision());
+
+  /**
+   *
+   * @brief         Check whether a configuration vector is normalized within the given precision provided by prec.
+   *
+   * @param[in]     model      Model of the kinematic tree.
+   * @param[in]     q          Configuration to check (size model.nq).
+   * @param[in]     prec       Precision.
+   *
+   * @return     Whether the configuration is normalized or not, within the given precision.
+   */
+  template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType>
+  inline bool isNormalized(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
+                           const Eigen::MatrixBase<ConfigVectorType> & q,
+                           const Scalar& prec = Eigen::NumTraits<Scalar>::dummy_precision())
+  {
+    return isNormalized<LieGroupMap,Scalar,Options,JointCollectionTpl,ConfigVectorType>(model,q,prec);
+  }
+
+  /**
+   *
    * @brief         Return true if the given configurations are equivalents, within the given precision.
    * @remarks       Two configurations can be equivalent but not equally coefficient wise (e.g two quaternions with opposite coefficients give rise to the same orientation, i.e. they are equivalent.).
    *
@@ -628,7 +663,7 @@ namespace pinocchio
   isSameConfiguration(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
                       const Eigen::MatrixBase<ConfigVectorIn1> & q1,
                       const Eigen::MatrixBase<ConfigVectorIn2> & q2,
-                      const Scalar & prec);
+                      const Scalar & prec = Eigen::NumTraits<Scalar>::dummy_precision());
 
   /**
    *
@@ -863,7 +898,7 @@ namespace pinocchio
    *
    */
   template<typename LieGroup_t, typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorIn1, typename ConfigVectorIn2>
-  typename PINOCCHIO_EIGEN_PLAIN_TYPE((typename ModelTpl<Scalar,Options,JointCollectionTpl>::ConfigVectorType))
+  typename PINOCCHIO_EIGEN_PLAIN_TYPE_NO_PARENS((typename ModelTpl<Scalar,Options,JointCollectionTpl>::ConfigVectorType))
   randomConfiguration(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
                       const Eigen::MatrixBase<ConfigVectorIn1> & lowerLimits,
                       const Eigen::MatrixBase<ConfigVectorIn2> & upperLimits);
@@ -884,7 +919,7 @@ namespace pinocchio
   
   */
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorIn1, typename ConfigVectorIn2>
-  typename PINOCCHIO_EIGEN_PLAIN_TYPE((typename ModelTpl<Scalar,Options,JointCollectionTpl>::ConfigVectorType))
+  typename PINOCCHIO_EIGEN_PLAIN_TYPE_NO_PARENS((typename ModelTpl<Scalar,Options,JointCollectionTpl>::ConfigVectorType))
   randomConfiguration(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
                       const Eigen::MatrixBase<ConfigVectorIn1> & lowerLimits,
                       const Eigen::MatrixBase<ConfigVectorIn2> & upperLimits)
@@ -907,7 +942,7 @@ namespace pinocchio
    *
    */
   template<typename LieGroup_t, typename Scalar, int Options, template<typename,int> class JointCollectionTpl>
-  typename PINOCCHIO_EIGEN_PLAIN_TYPE((typename ModelTpl<Scalar,Options,JointCollectionTpl>::ConfigVectorType))
+  typename PINOCCHIO_EIGEN_PLAIN_TYPE_NO_PARENS((typename ModelTpl<Scalar,Options,JointCollectionTpl>::ConfigVectorType))
   randomConfiguration(const ModelTpl<Scalar,Options,JointCollectionTpl> & model);
 
   /**
@@ -925,7 +960,7 @@ namespace pinocchio
    *
    */
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl>
-  typename PINOCCHIO_EIGEN_PLAIN_TYPE((typename ModelTpl<Scalar,Options,JointCollectionTpl>::ConfigVectorType))
+  typename PINOCCHIO_EIGEN_PLAIN_TYPE_NO_PARENS((typename ModelTpl<Scalar,Options,JointCollectionTpl>::ConfigVectorType))
   randomConfiguration(const ModelTpl<Scalar,Options,JointCollectionTpl> & model)
   {
     return randomConfiguration<LieGroupMap,Scalar,Options,JointCollectionTpl>(model);

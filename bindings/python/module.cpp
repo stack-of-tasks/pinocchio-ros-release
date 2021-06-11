@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015-2020 CNRS INRIA
+// Copyright (c) 2015-2021 CNRS INRIA
 // Copyright (c) 2015 Wandercraft, 86 rue de Paris 91400 Orsay, France.
 //
 
@@ -12,6 +12,7 @@
 #include "pinocchio/bindings/python/utils/registration.hpp"
 
 #include "pinocchio/bindings/python/utils/std-vector.hpp"
+#include "pinocchio/bindings/python/serialization/serialization.hpp"
 
 #include <eigenpy/eigenpy.hpp>
 
@@ -29,14 +30,12 @@ BOOST_PYTHON_MODULE(pinocchio_pywrap)
   bp::scope().attr("__raw_version__") = bp::str(PINOCCHIO_VERSION);
   eigenpy::enableEigenPy();
   
-  // Enable warning
-#ifndef Py_LIMITED_API
-  _PyWarnings_Init();
-#endif
+  // Enable warnings
+  bp::import("warnings");
   
-  if(not register_symbolic_link_to_registered_type<Eigen::Quaterniond>())
+  if(! register_symbolic_link_to_registered_type<Eigen::Quaterniond>())
     eigenpy::exposeQuaternion();
-  if(not register_symbolic_link_to_registered_type<Eigen::AngleAxisd>())
+  if(! register_symbolic_link_to_registered_type<Eigen::AngleAxisd>())
     eigenpy::exposeAngleAxis();
   
   StdContainerFromPythonList< std::vector<std::string> >::register_converter();
@@ -67,6 +66,13 @@ BOOST_PYTHON_MODULE(pinocchio_pywrap)
   .value("LOCAL_WORLD_ALIGNED",::pinocchio::LOCAL_WORLD_ALIGNED)
   .export_values()
   ;
+
+  bp::enum_< ::pinocchio::KinematicLevel >("KinematicLevel")
+  .value("POSITION",::pinocchio::POSITION)
+  .value("VELOCITY",::pinocchio::VELOCITY)
+  .value("ACCELERATION",::pinocchio::ACCELERATION)
+  .export_values()
+  ;
   
   bp::enum_< ::pinocchio::ArgumentPosition>("ArgumentPosition")
   .value("ARG0",::pinocchio::ARG0)
@@ -84,10 +90,16 @@ BOOST_PYTHON_MODULE(pinocchio_pywrap)
   
   exposeAlgorithms();
   exposeParsers();
+  exposeSerialization();
   
-#ifdef PINOCCHIO_WITH_HPP_FCL_PYTHON_BINDINGS
+#ifdef PINOCCHIO_PYTHON_INTERFACE_WITH_HPP_FCL_PYTHON_BINDINGS
   exposeFCL();
-#endif // PINOCCHIO_WITH_HPP_FCL_PYTHON_BINDINGS
+#endif // PINOCCHIO_PYTHON_INTERFACE_WITH_HPP_FCL_PYTHON_BINDINGS
+  
+#ifdef PINOCCHIO_PYTHON_INTERFACE_WITH_OPENMP
+  exposePool();
+  exposeParallelAlgorithms();
+#endif
   
   exposeVersion();
   exposeDependencies();

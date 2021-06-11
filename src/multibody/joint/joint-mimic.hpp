@@ -1,9 +1,9 @@
 //
-// Copyright (c) 2019 INRIA
+// Copyright (c) 2019-2021 INRIA
 //
 
-#ifndef __pinocchio_joint_mimic_hpp__
-#define __pinocchio_joint_mimic_hpp__
+#ifndef __pinocchio_multibody_joint_mimic_hpp__
+#define __pinocchio_multibody_joint_mimic_hpp__
 
 #include "pinocchio/macros.hpp"
 #include "pinocchio/multibody/joint/joint-base.hpp"
@@ -296,6 +296,9 @@ namespace pinocchio
     , S((Scalar)0)
     {}
     
+    JointDataMimic(const JointDataMimic & other)
+    { *this = other; }
+    
     JointDataMimic(const JointDataBase<JointData> & jdata,
                    const Scalar & scaling)
     : m_jdata_ref(jdata.derived())
@@ -313,6 +316,7 @@ namespace pinocchio
       return *this;
     }
     
+    using Base::isEqual;
     bool isEqual(const JointDataMimic & other) const
     {
       return Base::isEqual(other)
@@ -632,4 +636,4 @@ namespace pinocchio
   
 } // namespace pinocchio
 
-#endif // ifndef __pinocchio_joint_mimic_hpp__
+#endif // ifndef __pinocchio_multibody_joint_mimic_hpp__
