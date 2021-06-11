@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 CNRS INRIA
+# Copyright (c) 2015-2021 CNRS INRIA
 #
 
 # ----------------------------------------------------
@@ -51,6 +51,11 @@ IF(CPPADCG_FOUND)
   TARGET_LINK_LIBRARIES(timings-cg PUBLIC ${CMAKE_DL_LIBS})
 ENDIF(CPPADCG_FOUND)
 
+IF(BUILD_WITH_OPENMP_SUPPORT)
+  ADD_BENCH(timings-parallel TRUE)
+  TARGET_LINK_LIBRARIES(timings-parallel PRIVATE OpenMP::OpenMP_CXX)
+ENDIF(BUILD_WITH_OPENMP_SUPPORT)
+
 # timings
 # 
 ADD_BENCH(timings-cholesky TRUE)
@@ -72,9 +77,9 @@ TARGET_INCLUDE_DIRECTORIES(timings-eigen PUBLIC ${EIGEN3_INCLUDE_DIR})
 
 # timings-geometry
 # 
-IF(URDFDOM_FOUND AND HPP_FCL_FOUND)
+IF(URDFDOM_FOUND AND hpp-fcl_FOUND)
   ADD_BENCH(timings-geometry TRUE)
-ENDIF(URDFDOM_FOUND AND HPP_FCL_FOUND)
+ENDIF(URDFDOM_FOUND AND hpp-fcl_FOUND)
 
 # timings-jacobian
 #

@@ -25,7 +25,15 @@ class GepettoVisualizer(BaseVisualizer):
     def initViewer(self, viewer=None, windowName="python-pinocchio", sceneName="world", loadModel=False):
         """Init GepettoViewer by loading the gui and creating a window."""
 
-        import gepetto.corbaserver
+        try:
+            import gepetto.corbaserver
+        except ImportError:
+            import warnings
+            msg = ("Error while importing the viewer client.\n"
+                   "Check whether gepetto-gui is properly installed"
+                  )
+            warnings.warn(msg, category=UserWarning, stacklevel=2)
+
         try:
             self.viewer = gepetto.corbaserver.Client() if viewer is None else viewer
             gui = self.viewer.gui
@@ -155,14 +163,15 @@ class GepettoVisualizer(BaseVisualizer):
         # Finally, refresh the layout to obtain your first rendering.
         gui.refresh()
 
-    def display(self, q):
+    def display(self, q = None):
         """Display the robot at configuration q in the viewer by placing all the bodies."""
         if 'viewer' not in self.__dict__:
             return
 
         gui = self.viewer.gui
         # Update the robot kinematics and geometry.
-        pin.forwardKinematics(self.model,self.data,q)
+        if q is not None:
+            pin.forwardKinematics(self.model,self.data,q)
 
         if self.display_collisions:
             pin.updateGeometryPlacements(self.model, self.data, self.collision_model, self.collision_data)

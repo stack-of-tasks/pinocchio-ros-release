@@ -8,9 +8,9 @@
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include "pinocchio/serialization/fwd.hpp"
 #include "pinocchio/serialization/aligned-vector.hpp"
 #include "pinocchio/serialization/spatial.hpp"
-#include "pinocchio/serialization/eigen.hpp"
 #include "pinocchio/serialization/joints.hpp"
 #include "pinocchio/serialization/frame.hpp"
 
@@ -57,6 +57,7 @@ namespace boost
       PINOCCHIO_MAKE_DATA_NVP(ar,data,IS);
       PINOCCHIO_MAKE_DATA_NVP(ar,data,vxI);
       PINOCCHIO_MAKE_DATA_NVP(ar,data,Ivx);
+      PINOCCHIO_MAKE_DATA_NVP(ar,data,oinertias);
       PINOCCHIO_MAKE_DATA_NVP(ar,data,oYcrb);
       PINOCCHIO_MAKE_DATA_NVP(ar,data,doYcrb);
       PINOCCHIO_MAKE_DATA_NVP(ar,data,ddq);

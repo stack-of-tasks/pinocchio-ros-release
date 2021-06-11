@@ -183,10 +183,13 @@ namespace pinocchio
     /// \brief Left variation of the inertia matrix
     PINOCCHIO_ALIGNED_STD_VECTOR(Matrix6) Ivx;
     
-    /// \brief Inertia quantities expressed in the world frame
+    /// \brief Rigid Body Inertia supported by the joint expressed in the world frame
+    PINOCCHIO_ALIGNED_STD_VECTOR(Inertia) oinertias;
+    
+    /// \brief Composite Rigid Body Inertia expressed in the world frame
     PINOCCHIO_ALIGNED_STD_VECTOR(Inertia) oYcrb;
     
-    /// \brief Time variation of the inertia quantities expressed in the world frame
+    /// \brief Time variation of Composite Rigid Body Inertia expressed in the world frame
     PINOCCHIO_ALIGNED_STD_VECTOR(Matrix6) doYcrb;
     
     /// \brief Temporary for derivative algorithms
@@ -230,7 +233,7 @@ namespace pinocchio
     Force dhg;
     
     /// \brief Centroidal Composite Rigid Body Inertia.
-    /// \note \f$ hg = Ig v_{\text{mean}}\f$ map a mean velocity to the current centroil momentum quantity.
+    /// \note \f$ hg = Ig v_{\text{mean}}\f$ map a mean velocity to the current centroidal momentum quantity.
     Inertia Ig;
 
     /// \brief Spatial forces set, used in CRBA and CCRBA

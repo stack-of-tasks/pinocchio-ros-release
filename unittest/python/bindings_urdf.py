@@ -7,7 +7,7 @@ class TestGeometryObjectUrdfBindings(unittest.TestCase):
 
     def setUp(self):
         self.current_file = os.path.dirname(str(os.path.abspath(__file__)))
-        self.model_dir = os.path.abspath(os.path.join(self.current_file, "../../models/others/robots"))
+        self.model_dir = os.path.abspath(os.path.join(self.current_file, "../../models/example-robot-data/robots"))
         self.model_path = os.path.abspath(os.path.join(self.model_dir, "romeo_description/urdf/romeo.urdf"))
 
     def test_load(self):
@@ -20,8 +20,9 @@ class TestGeometryObjectUrdfBindings(unittest.TestCase):
         model_ref = pin.buildModelFromUrdf(self.model_path, pin.JointModelFreeFlyer())
 
     def test_xml(self):
-        file_content = open(self.model_path,"r").read()
-        
+        with open(self.model_path) as model:
+            file_content = model.read()
+
         model_ref = pin.buildModelFromUrdf(self.model_path, pin.JointModelFreeFlyer())
         model = pin.buildModelFromXML(file_content,pin.JointModelFreeFlyer())
 

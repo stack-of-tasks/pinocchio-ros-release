@@ -97,44 +97,51 @@ namespace pinocchio
       GeometryModel& > ArgsType;
       
       template <typename JointModel>
-      static void algo (const JointModelBase<JointModel> & jmodel,
+      static void algo (const JointModelBase<JointModel> & jmodel_in,
                         const Model & modelAB,
                         const GeometryModel & geomModelAB,
-                        JointIndex parentId,
+                        JointIndex parent_id,
                         const typename Model::SE3 & pMi,
                         Model & model,
                         GeometryModel & geomModel)
       {
         // If old parent is universe, use what's provided in the input.
         // otherwise, get the parent from modelAB.
-        if (modelAB.parents[jmodel.id()] > 0)
-          parentId = model.getJointId(modelAB.names[modelAB.parents[jmodel.id()]]);
+        const JointIndex joint_id_in = jmodel_in.id();
+        if (modelAB.parents[joint_id_in] > 0)
+          parent_id = model.getJointId(modelAB.names[modelAB.parents[joint_id_in]]);
         
-        PINOCCHIO_CHECK_INPUT_ARGUMENT(!model.existJointName(modelAB.names[jmodel.id()]),
+        PINOCCHIO_CHECK_INPUT_ARGUMENT(!model.existJointName(modelAB.names[joint_id_in]),
                                        "The two models have conflicting joint names.");
         
-        JointIndex jid = model.addJoint (
-                                         parentId,
-                                         jmodel,
-                                         pMi * modelAB.jointPlacements[jmodel.id()],
-                                         modelAB.names[jmodel.id()],
-                                         jmodel.jointVelocitySelector(modelAB.effortLimit),
-                                         jmodel.jointVelocitySelector(modelAB.velocityLimit),
-                                         jmodel.jointConfigSelector(modelAB.lowerPositionLimit),
-                                         jmodel.jointConfigSelector(modelAB.upperPositionLimit));
-        assert (jid < model.joints.size());
+        JointIndex joint_id_out = model.addJoint(parent_id,
+                                                 jmodel_in,
+                                                 pMi * modelAB.jointPlacements[joint_id_in],
+                                                 modelAB.names[joint_id_in],
+                                                 jmodel_in.jointVelocitySelector(modelAB.effortLimit),
+                                                 jmodel_in.jointVelocitySelector(modelAB.velocityLimit),
+                                                 jmodel_in.jointConfigSelector(modelAB.lowerPositionLimit),
+                                                 jmodel_in.jointConfigSelector(modelAB.upperPositionLimit),
+                                                 jmodel_in.jointVelocitySelector(modelAB.friction),
+                                                 jmodel_in.jointVelocitySelector(modelAB.damping));
+        assert(joint_id_out < model.joints.size());
         
-        model.appendBodyToJoint (jid, modelAB.inertias[jmodel.id()]);
+        model.appendBodyToJoint(joint_id_out, modelAB.inertias[joint_id_in]);
+        
+        const typename Model::JointModel & jmodel_out = model.joints[joint_id_out];
+        jmodel_out.jointVelocitySelector(model.rotorInertia) = jmodel_in.jointVelocitySelector(modelAB.rotorInertia);
+        jmodel_out.jointVelocitySelector(model.rotorGearRatio) = jmodel_in.jointVelocitySelector(modelAB.rotorGearRatio);
         
         // Add all frames whose parent is this joint.
-        for (FrameIndex fid = 1; fid < modelAB.frames.size(); ++fid) {
+        for (FrameIndex fid = 1; fid < modelAB.frames.size(); ++fid)
+        {
           Frame frame = modelAB.frames[fid];
-          if (frame.parent == jmodel.id())
+          if (frame.parent == jmodel_in.id())
           {
             PINOCCHIO_CHECK_INPUT_ARGUMENT(!model.existFrame(frame.name, frame.type),
                                            "The two models have conflicting frame names.");
             
-            frame.parent = jid;
+            frame.parent = joint_id_out;
             assert (frame.previousFrame > 0 || frame.type == JOINT);
             if (frame.previousFrame != 0)
             {
@@ -146,19 +153,19 @@ namespace pinocchio
           }
         }
         // Add all geometries whose parent is this joint.
-        for (GeomIndex gid = 0; gid < geomModelAB.geometryObjects.size(); ++gid)
+        for(GeomIndex gid = 0; gid < geomModelAB.geometryObjects.size(); ++gid)
         {
           GeometryObject go = geomModelAB.geometryObjects[gid];
-          if (go.parentJoint == jmodel.id())
+          if(go.parentJoint == joint_id_in)
           {
-            go.parentJoint = jid;
-            assert (go.parentFrame > 0);
-            if (go.parentFrame != 0)
+            go.parentJoint = joint_id_out;
+            assert(go.parentFrame > 0);
+            if(go.parentFrame != 0)
             {
               go.parentFrame = model.getFrameId(modelAB.frames[go.parentFrame].name,
                                                 modelAB.frames[go.parentFrame].type);
             }
-            geomModel.addGeometryObject (go);
+            geomModel.addGeometryObject(go);
           }
         }
       }
@@ -193,7 +200,7 @@ namespace pinocchio
     typedef details::AppendJointOfModelAlgoTpl<Scalar, Options, JointCollectionTpl> AppendJointOfModelAlgo;
     typedef typename AppendJointOfModelAlgo::ArgsType ArgsType;
     
-    PINOCCHIO_CHECK_INPUT_ARGUMENT(frameInModelA < (FrameIndex) modelA.nframes,
+    PINOCCHIO_CHECK_INPUT_ARGUMENT((bool)(frameInModelA < (FrameIndex) modelA.nframes),
                                    "frameInModelA is an invalid Frame index, greater than the number of frames contained in modelA.");
     
     typedef ModelTpl<Scalar,Options,JointCollectionTpl> Model;
@@ -293,7 +300,7 @@ namespace pinocchio
     typedef typename Model::JointData JointData;
     typedef typename Model::Frame Frame;
     typedef typename Model::SE3 SE3;
-    
+
     // Sort indexes
     std::sort(list_of_joints_to_lock.begin(),list_of_joints_to_lock.end());
     
@@ -310,7 +317,6 @@ namespace pinocchio
     reduced_model.joints                .reserve((size_t)njoints);
     reduced_model.jointPlacements       .reserve((size_t)njoints);
     reduced_model.parents               .reserve((size_t)njoints);
-    reduced_model.inertias              .reserve((size_t)njoints);
     
     reduced_model.names[0] = input_model.names[0];
     reduced_model.joints[0] = input_model.joints[0];
@@ -325,7 +331,7 @@ namespace pinocchio
     
     for(JointIndex joint_id = 1; joint_id < (JointIndex)input_model.njoints; ++joint_id)
     {
-      const JointIndex joint_id_to_lock = (current_index_to_lock < list_of_joints_to_lock.size()) ? list_of_joints_to_lock[current_index_to_lock] : input_model.joints.size();
+      const JointIndex joint_id_to_lock = (current_index_to_lock < list_of_joints_to_lock.size()) ? list_of_joints_to_lock[current_index_to_lock] : 0;
       
       const JointIndex input_parent_joint_index = input_model.parents[joint_id];
       const std::string & joint_name = input_model.names[joint_id];
@@ -362,15 +368,11 @@ namespace pinocchio
         Frame frame = Frame(joint_name,
                             reduced_parent_joint_index, reduced_previous_frame_index,
                             liMi,
-                            FIXED_JOINT);
+                            FIXED_JOINT,
+                            input_model.inertias[joint_id]);
         
         FrameIndex frame_id = reduced_model.addFrame(frame);
         reduced_model.frames[frame_id].previousFrame = frame_id; // a bit weird, but this is a solution for missing parent frame
-        
-        // Add the Inertia of the link supported by joint_id
-        reduced_model.appendBodyToJoint(reduced_parent_joint_index,
-                                        input_model.inertias[joint_id],
-                                        frame.placement);
         
         current_index_to_lock++;
       }
@@ -384,11 +386,20 @@ namespace pinocchio
                                                              joint_input_model.jointVelocitySelector(input_model.effortLimit),
                                                              joint_input_model.jointVelocitySelector(input_model.velocityLimit),
                                                              joint_input_model.jointConfigSelector(input_model.lowerPositionLimit),
-                                                             joint_input_model.jointConfigSelector(input_model.upperPositionLimit));
+                                                             joint_input_model.jointConfigSelector(input_model.upperPositionLimit),
+                                                             joint_input_model.jointVelocitySelector(input_model.friction),
+                                                             joint_input_model.jointVelocitySelector(input_model.damping));
         // Append inertia
         reduced_model.appendBodyToJoint(reduced_joint_id,
                                         input_model.inertias[joint_id],
                                         SE3::Identity());
+        
+        // Copy other kinematics and dynamics properties
+        const typename Model::JointModel & jmodel_out = reduced_model.joints[reduced_joint_id];
+        jmodel_out.jointVelocitySelector(reduced_model.rotorInertia)
+        = joint_input_model.jointVelocitySelector(input_model.rotorInertia);
+        jmodel_out.jointVelocitySelector(reduced_model.rotorGearRatio)
+        = joint_input_model.jointVelocitySelector(input_model.rotorGearRatio);
       }
     }
     
@@ -420,34 +431,34 @@ namespace pinocchio
     for(++frame_it;frame_it != input_model.frames.end(); ++frame_it)
     {
       const Frame & input_frame = *frame_it;
-      const std::string & input_joint_name = input_model.names[input_frame.parent];
+      const std::string & support_joint_name = input_model.names[input_frame.parent];
       
-      std::vector<JointIndex>::const_iterator joint_id_it = std::find(list_of_joints_to_lock.begin(),
-                                                                      list_of_joints_to_lock.end(),
-                                                                      input_frame.parent);
+      std::vector<JointIndex>::const_iterator support_joint_it = std::find(list_of_joints_to_lock.begin(),
+                                                                           list_of_joints_to_lock.end(),
+                                                                           input_frame.parent);
       
-      if(joint_id_it != list_of_joints_to_lock.end())
+      if(support_joint_it != list_of_joints_to_lock.end())
       {
         if(   input_frame.type == JOINT
            && reduced_model.existFrame(input_frame.name)
-           && input_joint_name == input_frame.name)
+           && support_joint_name == input_frame.name)
           continue; // this means that the Joint is now fixed and has been replaced by a Frame. No need to add a new one.
         
         // The joint has been removed and replaced by a Frame
-        const FrameIndex joint_frame_id = reduced_model.getFrameId(input_joint_name);
+        const FrameIndex joint_frame_id = reduced_model.getFrameId(support_joint_name);
         const Frame & joint_frame = reduced_model.frames[joint_frame_id];
         Frame reduced_frame = input_frame;
         reduced_frame.placement = joint_frame.placement * input_frame.placement;
         reduced_frame.parent = joint_frame.parent;
         reduced_frame.previousFrame = reduced_model.getFrameId(input_model.frames[input_frame.previousFrame].name);
-        reduced_model.addFrame(reduced_frame);
+        reduced_model.addFrame(reduced_frame, false);
       }
       else
       {
         Frame reduced_frame = input_frame;
         reduced_frame.parent = reduced_model.getJointId(input_model.names[input_frame.parent]);
         reduced_frame.previousFrame = reduced_model.getFrameId(input_model.frames[input_frame.previousFrame].name);
-        reduced_model.addFrame(reduced_frame);
+        reduced_model.addFrame(reduced_frame, false);
       }
     }
   }
@@ -461,54 +472,85 @@ namespace pinocchio
                     ModelTpl<Scalar,Options,JointCollectionTpl> & reduced_model,
                     GeometryModel & reduced_geom_model)
   {
-    typedef ModelTpl<Scalar,Options,JointCollectionTpl> Model;
-    buildReducedModel(input_model,list_of_joints_to_lock,reference_configuration,reduced_model);
-    
-    // Add all the geometries
-    typedef GeometryModel::GeometryObject GeometryObject;
-    typedef GeometryModel::GeometryObjectVector GeometryObjectVector;
-    for(GeometryObjectVector::const_iterator it = input_geom_model.geometryObjects.begin();
-        it != input_geom_model.geometryObjects.end(); ++it)
-    {
-      const GeometryModel::GeometryObject & geom = *it;
-      
-      const JointIndex joint_id_in_input_model = geom.parentJoint;
-      PINOCCHIO_CHECK_INPUT_ARGUMENT(joint_id_in_input_model < (JointIndex)input_model.njoints,
-                                     "Invalid joint parent index for the geometry with name " + geom.name);
-      const std::string & parent_joint_name = input_model.names[joint_id_in_input_model];
-      
-      JointIndex reduced_joint_id = (JointIndex)-1;
-      typedef typename Model::SE3 SE3;
-      SE3 relative_placement = SE3::Identity();
-      if(reduced_model.existJointName(parent_joint_name))
+
+    const std::vector<GeometryModel> temp_input_geoms(1,input_geom_model);
+    std::vector<GeometryModel> temp_reduced_geom_models;
+
+    buildReducedModel(input_model, temp_input_geoms, list_of_joints_to_lock,
+                      reference_configuration, reduced_model,
+                      temp_reduced_geom_models);
+    reduced_geom_model = temp_reduced_geom_models.front();
+  }
+
+  template <typename Scalar, int Options,
+            template <typename, int> class JointCollectionTpl,
+            typename GeometryModelAllocator,
+            typename ConfigVectorType>
+  void buildReducedModel(
+      const ModelTpl<Scalar, Options, JointCollectionTpl> &input_model,
+      const std::vector<GeometryModel,GeometryModelAllocator> &list_of_geom_models,
+      const std::vector<JointIndex> &list_of_joints_to_lock,
+      const Eigen::MatrixBase<ConfigVectorType> &reference_configuration,
+      ModelTpl<Scalar, Options, JointCollectionTpl> &reduced_model,
+      std::vector<GeometryModel,GeometryModelAllocator> &list_of_reduced_geom_models) {
+
+    typedef ModelTpl<Scalar, Options, JointCollectionTpl> Model;
+    buildReducedModel(input_model, list_of_joints_to_lock, reference_configuration, reduced_model);
+
+    // for all GeometryModels
+    for (size_t gmi = 0; gmi < list_of_geom_models.size(); ++gmi) {
+      const GeometryModel &input_geom_model = list_of_geom_models[gmi];
+      GeometryModel reduced_geom_model;
+
+      // Add all the geometries
+      typedef GeometryModel::GeometryObject GeometryObject;
+      typedef GeometryModel::GeometryObjectVector GeometryObjectVector;
+      for(GeometryObjectVector::const_iterator it = input_geom_model.geometryObjects.begin();
+          it != input_geom_model.geometryObjects.end(); ++it)
       {
-        reduced_joint_id = reduced_model.getJointId(parent_joint_name);
+        const GeometryModel::GeometryObject & geom = *it;
+
+        const JointIndex joint_id_in_input_model = geom.parentJoint;
+        _PINOCCHIO_CHECK_INPUT_ARGUMENT_2((joint_id_in_input_model < (JointIndex)input_model.njoints),
+                                          "Invalid joint parent index for the geometry with name " + geom.name);
+        const std::string & parent_joint_name = input_model.names[joint_id_in_input_model];
+
+        JointIndex reduced_joint_id = (JointIndex)-1;
+        typedef typename Model::SE3 SE3;
+        SE3 relative_placement = SE3::Identity();
+        if(reduced_model.existJointName(parent_joint_name))
+        {
+          reduced_joint_id = reduced_model.getJointId(parent_joint_name);
+        }
+        else // The joint is now a frame
+        {
+          const FrameIndex reduced_frame_id = reduced_model.getFrameId(parent_joint_name);
+          reduced_joint_id = reduced_model.frames[reduced_frame_id].parent;
+          relative_placement = reduced_model.frames[reduced_frame_id].placement;
+        }
+
+        GeometryObject reduced_geom(geom);
+        reduced_geom.parentJoint = reduced_joint_id;
+        reduced_geom.parentFrame = reduced_model.getBodyId(
+            input_model.frames[geom.parentFrame].name);
+        reduced_geom.placement = relative_placement * geom.placement;
+        reduced_geom_model.addGeometryObject(reduced_geom);
       }
-      else // The joint is now a frame
+
+  #ifdef PINOCCHIO_WITH_HPP_FCL
+      // Add all the collision pairs - the index of the geometry objects should have not changed
+
+      typedef GeometryModel::CollisionPairVector CollisionPairVector;
+      for(CollisionPairVector::const_iterator it = input_geom_model.collisionPairs.begin();
+          it != input_geom_model.collisionPairs.end(); ++it)
       {
-        const FrameIndex reduced_frame_id = reduced_model.getFrameId(parent_joint_name);
-        reduced_joint_id = reduced_model.frames[reduced_frame_id].parent;
-        relative_placement = reduced_model.frames[reduced_frame_id].placement;
+        const CollisionPair & cp = *it;
+        reduced_geom_model.addCollisionPair(cp);
       }
-      
-      GeometryObject reduced_geom(geom);
-      reduced_geom.parentJoint = reduced_joint_id;
-      reduced_geom.placement = relative_placement * geom.placement;
-      reduced_geom_model.addGeometryObject(reduced_geom);
+  #endif
+
+    list_of_reduced_geom_models.push_back(reduced_geom_model);
     }
-    
-#ifdef PINOCCHIO_WITH_HPP_FCL
-    // Add all the collision pairs - the index of the geometry objects should have not changed
-    
-    typedef GeometryModel::CollisionPairVector CollisionPairVector;
-    for(CollisionPairVector::const_iterator it = input_geom_model.collisionPairs.begin();
-        it != input_geom_model.collisionPairs.end(); ++it)
-    {
-      const CollisionPair & cp = *it;
-      reduced_geom_model.addCollisionPair(cp);
-    }
-#endif
-    
   }
 
 } // namespace pinocchio

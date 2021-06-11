@@ -31,17 +31,13 @@ If you want to directly dive into **Pinocchio**, only one single line is suffici
 conda install pinocchio -c conda-forge
 </p>
 
-## News
-
-**August 2020**: We are **hiring**! We are looking for a talented C++/Python software developer to enhance and promote Pinocchio inside the robotics community and beyond. Please contact @jcarpent for further details.
-
 ## Pinocchio main features
 
 **Pinocchio** is fast:
 
    - C++ template library,
    - cache friendly,
-   - automatic code generation support.
+   - automatic code generation support via [CppADCodeGen](https://github.com/joaoleal/CppADCodeGen).
 
 **Pinocchio** is versatile, implementing basic and more advanced rigid body dynamics algorithms:
 
@@ -49,7 +45,8 @@ conda install pinocchio -c conda-forge
    - forward/inverse dynamics and their analytical derivatives,
    - centroidal dynamics and its analytical derivatives,
    - support of multiple precision arithmetic via Boost.Multiprecision or any similar framework,
-   - and much more with the support of modern Automatic Differentiation frameworks like [CppAD](https://github.com/coin-or/CppAD) or [CasADi](https://web.casadi.org/).
+   - computations of kinematic and dynamic regressors for system identification and more,
+   - and much more with the support of modern and open source Automatic Differentiation frameworks like [CppAD](https://github.com/coin-or/CppAD) or [CasADi](https://web.casadi.org/).
 
 **Pinocchio** is flexible:
 
@@ -58,7 +55,7 @@ conda install pinocchio -c conda-forge
 
 **Pinocchio** is extensible.  
 **Pinocchio** is multi-thread friendly.  
-**Pinocchio** is reliable and extensively tested (unit-tests, simulations and real robotics applications).  
+**Pinocchio** is reliable and extensively tested (unit-tests, simulations and real world robotics applications).  
 **Pinocchio** is supported and tested on Windows, Mac OS X, Unix and Linux ([see build status here](http://robotpkg.openrobots.org/rbulk/robotpkg/math/pinocchio/index.html)).
 
 ## Performances
@@ -112,16 +109,16 @@ Many external viewers can also be integrated. See example [here](./bindings/pyth
 ## Citing Pinocchio
 
 To cite **Pinocchio** in your academic research, please use the following bibtex lines:
-```
+```bibtex
 @misc{pinocchioweb,
    author = {Justin Carpentier and Florian Valenza and Nicolas Mansard and others},
    title = {Pinocchio: fast forward and inverse dynamics for poly-articulated systems},
    howpublished = {https://stack-of-tasks.github.io/pinocchio},
-   year = {2015--2019}
+   year = {2015--2021}
 }
 ```
 and the following one for the reference to the paper introducing **Pinocchio**:
-```
+```bibtex
 @inproceedings{carpentier2019pinocchio,
    title={The Pinocchio C++ library -- A fast and flexible implementation of rigid body dynamics algorithms and their analytical derivatives},
    author={Carpentier, Justin and Saurel, Guilhem and Buondonno, Gabriele and Mirabel, Joseph and Lamiraux, Florent and Stasse, Olivier and Mansard, Nicolas},
@@ -131,7 +128,7 @@ and the following one for the reference to the paper introducing **Pinocchio**:
 ```
 
 The algorithms for the analytical derivatives of rigid-body dynamics algorithms are detailed here:
-```
+```bibtex
 @inproceedings{carpentier2018analytical,
   title = {Analytical Derivatives of Rigid Body Dynamics Algorithms},
   author = {Carpentier, Justin and Mansard, Nicolas},
@@ -163,6 +160,7 @@ The following people have been involved in the development of **Pinocchio** and 
 - [Robin Strudel](https://www.di.ens.fr/robin.strudel/) (Inria): features extension
 - [François Keith](https://scholar.google.fr/citations?user=cxSxXiQAAAAJ&hl=en) (CEA): Windows support
 - [Aamr El Kazdadi](https://github.com/aelkazdadi) (Inria): multiprecision arithmetic support
+- [Nicolas Torres Alberto](https://scholar.google.com/citations?user=gYNLhEIAAAAJ&hl=en) (Inria): features extension
 
 If you have taken part to the development of **Pinocchio**, feel free to add your name and contribution in this list.
 
