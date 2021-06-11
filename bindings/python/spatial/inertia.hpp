@@ -68,7 +68,7 @@ namespace pinocchio
                                   bp::default_call_policies(),
                                   (bp::arg("mass"),bp::arg("lever"),bp::arg("inertia"))),
              "Initialize from mass, lever and 3d inertia.")
-        .def(bp::init<Inertia>((bp::arg("other")),"Copy constructor."))
+        .def(bp::init<Inertia>((bp::arg("self"),bp::arg("other")),"Copy constructor."))
         
         .add_property("mass",
                       &InertiaPythonVisitor::getMass,
@@ -147,15 +147,15 @@ namespace pinocchio
 
         .def("FromSphere", &Inertia::FromSphere,
              bp::args("mass","radius"),
-             "Returns the Inertia of an sphere with a given mass and of radius.")
+             "Returns the Inertia of a sphere defined by a given mass and radius.")
         .staticmethod("FromSphere")
         .def("FromEllipsoid", &Inertia::FromEllipsoid,
              bp::args("mass","length_x","length_y","length_z"),
-             "Returns the Inertia of an ellipsoid shape with a given mass and of given dimensions the semi-axis of values length_{x,y,z}.")
+             "Returns the Inertia of an ellipsoid shape defined by a mass and given dimensions the semi-axis of values length_{x,y,z}.")
         .staticmethod("FromEllipsoid")
         .def("FromCylinder", &Inertia::FromCylinder,
              bp::args("mass","radius","length"),
-             "Returns the Inertia of a cylinder shape ith a mass and of dimension radius and length.")
+             "Returns the Inertia of a cylinder defined by its mass, radius and length along the Z axis.")
         .staticmethod("FromCylinder")
         .def("FromBox", &Inertia::FromBox,
              bp::args("mass","length_x","length_y","length_z"),
@@ -210,7 +210,7 @@ namespace pinocchio
         bp::class_<Inertia>("Inertia",
                             "This class represenses a sparse version of a Spatial Inertia and its is defined by its mass, its center of mass location and the rotational inertia expressed around this center of mass.\n\n"
                             "Supported operations ...",
-                            bp::init<>())
+                            bp::init<>(bp::arg("self"),"Default constructor."))
         .def(InertiaPythonVisitor<Inertia>())
         .def(CopyableVisitor<Inertia>())
         .def(PrintableVisitor<Inertia>())

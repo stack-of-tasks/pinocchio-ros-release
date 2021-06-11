@@ -10,9 +10,9 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
 
+#include "pinocchio/serialization/fwd.hpp"
 #include "pinocchio/serialization/aligned-vector.hpp"
 #include "pinocchio/serialization/spatial.hpp"
-#include "pinocchio/serialization/eigen.hpp"
 #include "pinocchio/serialization/joints.hpp"
 #include "pinocchio/serialization/frame.hpp"
 
@@ -44,6 +44,8 @@ namespace boost
       ar & make_nvp("referenceConfigurations",model.referenceConfigurations);
       ar & make_nvp("rotorInertia",model.rotorInertia);
       ar & make_nvp("rotorGearRatio",model.rotorGearRatio);
+      ar & make_nvp("friction",model.friction);
+      ar & make_nvp("damping",model.damping);
       ar & make_nvp("effortLimit",model.effortLimit);
       ar & make_nvp("velocityLimit",model.velocityLimit);
       ar & make_nvp("lowerPositionLimit",model.lowerPositionLimit);

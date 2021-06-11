@@ -1,9 +1,9 @@
 #
-# Copyright (c) 2015-2020 CNRS INRIA
+# Copyright (c) 2015-2021 CNRS INRIA
 # Copyright (c) 2015 Wandercraft, 86 rue de Paris 91400 Orsay, France.
 #
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
 SET(PROJECT_NAME pinocchio)
 SET(PROJECT_DESCRIPTION "A fast and flexible implementation of Rigid Body Dynamics algorithms and their analytical derivatives")
@@ -19,21 +19,25 @@ SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
 SET(BUILD_TESTING OFF CACHE BOOL "" FORCE) # Disable unit tests for buildfarm release to avoid memory exhaustion
 
 # Check if the submodule cmake have been initialized
-IF(NOT EXISTS "${CMAKE_SOURCE_DIR}/cmake/base.cmake")
+IF(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/cmake/base.cmake")
   MESSAGE(FATAL_ERROR "\nPlease run the following command first:\ngit submodule update --init\n")
 ENDIF()
 
 SET(DOXYGEN_USE_MATHJAX YES)
 SET(DOXYGEN_USE_TEMPLATE_CSS YES)
 
-INCLUDE(cmake/base.cmake)
+INCLUDE(${CMAKE_CURRENT_LIST_DIR}/cmake/base.cmake)
 COMPUTE_PROJECT_ARGS(PROJECT_ARGS LANGUAGES CXX)
 PROJECT(${PROJECT_NAME} ${PROJECT_ARGS})
 
-INCLUDE(cmake/boost.cmake)
-INCLUDE(cmake/python.cmake)
-INCLUDE(cmake/ide.cmake)
-INCLUDE(cmake/apple.cmake)
+INCLUDE(${CMAKE_CURRENT_LIST_DIR}/cmake/boost.cmake)
+INCLUDE(${CMAKE_CURRENT_LIST_DIR}/cmake/python.cmake)
+INCLUDE(${CMAKE_CURRENT_LIST_DIR}/cmake/ide.cmake)
+INCLUDE(${CMAKE_CURRENT_LIST_DIR}/cmake/apple.cmake)
+IF(APPLE) # Use the handmade approach
+  SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake/find-external/OpenMP ${CMAKE_MODULE_PATH})
+ENDIF(APPLE)
+INCLUDE(CMakeDependentOption)
 
 # If needed, set CMake policy for APPLE systems
 APPLY_DEFAULT_APPLE_CONFIGURATION()
@@ -47,7 +51,7 @@ ENDIF(WIN32)
 # --- OPTIONS ----------------------------------------
 OPTION(BUILD_BENCHMARK "Build the benchmarks" OFF)
 OPTION(BUILD_UTILS "Build the utils" OFF)
-OPTION(BUILD_PYTHON_INTERFACE "Build the Python binding" ON)
+OPTION(BUILD_PYTHON_INTERFACE "Build the Python bindings" ON)
 OPTION(BUILD_WITH_COMMIT_VERSION "Build libraries by setting specific commit version" OFF)
 
 IF(DEFINED BUILD_UNIT_TESTS)
@@ -65,6 +69,8 @@ OPTION(BUILD_WITH_COLLISION_SUPPORT "Build the library with the collision suppor
 OPTION(BUILD_WITH_AUTODIFF_SUPPORT "Build the library with the automatic differentiation support (via CppAD)" OFF)
 OPTION(BUILD_WITH_CASADI_SUPPORT "Build the library with the support of CASADI" OFF)
 OPTION(BUILD_WITH_CODEGEN_SUPPORT "Build the library with the support of code generation (via CppADCodeGen)" OFF)
+OPTION(BUILD_WITH_OPENMP_SUPPORT "Build the library with the OpenMP support" OFF)
+cmake_dependent_option(LINK_PYTHON_INTERFACE_TO_OPENM "Link OpenMP to the Python interface" ON BUILD_WITH_OPENMP_SUPPORT OFF)
 
 OPTION(INITIALIZE_WITH_NAN "Initialize Eigen entries with NaN" OFF)
 
@@ -125,6 +131,10 @@ IF(BUILD_WITH_CASADI_SUPPORT)
   ADD_PROJECT_DEPENDENCY(casadi 3.4.5 REQUIRED PKG_CONFIG_REQUIRES "casadi >= 3.4.5")
 ENDIF(BUILD_WITH_CASADI_SUPPORT)
 
+IF(BUILD_WITH_OPENMP_SUPPORT)
+  FIND_PACKAGE(OpenMP REQUIRED)
+ENDIF(BUILD_WITH_OPENMP_SUPPORT)
+
 SET(BOOST_REQUIRED_COMPONENTS filesystem serialization system)
 
 SET_BOOST_DEFAULT_OPTIONS()
@@ -132,15 +142,30 @@ EXPORT_BOOST_DEFAULT_OPTIONS()
 ADD_PROJECT_DEPENDENCY(Boost REQUIRED COMPONENTS ${BOOST_REQUIRED_COMPONENTS})
 
 IF(BUILD_PYTHON_INTERFACE)
-  FINDPYTHON()
+  MESSAGE(STATUS "The Python bindings of Pinocchio will be compiled along the main library. If you want to disable this feature, please set the option BUILD_PYTHON_INTERFACE to OFF.")
+  FINDPYTHON(REQUIRED)
   SEARCH_FOR_BOOST_PYTHON(REQUIRED)
-  ADD_PROJECT_DEPENDENCY(eigenpy 2.5.0 REQUIRED)
+  ADD_PROJECT_DEPENDENCY(eigenpy 2.6.2 REQUIRED)
+  
+  # Check wether this a PyPy Python
+  EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c "import platform; print(platform.python_implementation())"
+    OUTPUT_VARIABLE _python_implementation_value
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET)
+  
+  MESSAGE(STATUS "Python compiler: ${_python_implementation_value}")
+  IF(_python_implementation_value MATCHES "PyPy")
+    SET(BUILD_PYTHON_INTERFACE_WITH_PYPY TRUE)
+  ENDIF()
+  
+ELSE(BUILD_PYTHON_INTERFACE)
+  MESSAGE(STATUS "Pinocchio won't be compiled with its Python bindings. If you want to enable this feature, please set the option BUILD_PYTHON_INTERFACE to ON.")
 ENDIF(BUILD_PYTHON_INTERFACE)
 
 IF(BUILD_WITH_HPP_FCL_SUPPORT)
   ADD_DEFINITIONS(-DPINOCCHIO_WITH_HPP_FCL)
   LIST(APPEND CFLAGS_DEPENDENCIES "-DPINOCCHIO_WITH_HPP_FCL")
-  ADD_PROJECT_DEPENDENCY(hpp-fcl 1.4.0 REQUIRED PKG_CONFIG_REQUIRES "hpp-fcl >= 1.4.0")
+  ADD_PROJECT_DEPENDENCY(hpp-fcl 1.7.3 REQUIRED PKG_CONFIG_REQUIRES "hpp-fcl >= 1.7.3")
   # Check whether hpp-fcl python bindings are available.
   SET(BUILD_WITH_HPP_FCL_PYTHON_BINDINGS FALSE)
   IF(BUILD_PYTHON_INTERFACE)
@@ -163,8 +188,6 @@ ENDIF(BUILD_WITH_HPP_FCL_SUPPORT)
 # but it avoids any compilation issue.
 ADD_DEFINITIONS(-DBOOST_MPL_LIMIT_LIST_SIZE=30)
 ADD_DEFINITIONS(-DBOOST_MPL_LIMIT_VECTOR_SIZE=30)
-
-LIST(APPEND CFLAGS_DEPENDENCIES "-DBOOST_MPL_LIMIT_LIST_SIZE=30")
 
 # Path to boost headers
 INCLUDE_DIRECTORIES(SYSTEM ${Boost_INCLUDE_DIRS})
@@ -202,12 +225,14 @@ MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/spatial")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/multibody")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/multibody/joint")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/multibody/liegroup")
+MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/multibody/pool")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/multibody/visitor")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/parsers")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/parsers/urdf")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/utils")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/serialization")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/algorithm")
+MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/algorithm/parallel")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/container")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/codegen")
 MAKE_DIRECTORY("${${PROJECT_NAME}_BINARY_DIR}/include/pinocchio/autodiff")
@@ -260,22 +285,37 @@ ADD_SUBDIRECTORY(examples)
 ADD_SUBDIRECTORY(benchmark)
 
 # --- PACKAGING ----------------------------------------------------------------
+MACRO(EXPORT_VARIABLE var_name var_value)
+  GET_DIRECTORY_PROPERTY(has_parent PARENT_DIRECTORY)
+  IF(has_parent)
+    SET(${var_name} ${var_value} PARENT_SCOPE)
+  ELSE()
+    SET(${var_name} ${var_value})
+  ENDIF()
+ENDMACRO(EXPORT_VARIABLE var_name var_value)
+
 IF(BUILD_WITH_URDF_SUPPORT)
+  EXPORT_VARIABLE(PINOCCHIO_USE_URDFDOM ON)
   SET(PACKAGE_EXTRA_MACROS "${PACKAGE_EXTRA_MACROS}\nset(PINOCCHIO_USE_URDFDOM \"\")")
 ENDIF()
 IF(BUILD_WITH_HPP_FCL_SUPPORT)
+  EXPORT_VARIABLE(PINOCCHIO_USE_HPP_FCL ON)
   SET(PACKAGE_EXTRA_MACROS "${PACKAGE_EXTRA_MACROS}\nset(PINOCCHIO_USE_HPP_FCL \"\")")
 ENDIF()
 IF(BUILD_WITH_CPPAD_SUPPORT)
+  EXPORT_VARIABLE(PINOCCHIO_USE_CPPAD ON)
   SET(PACKAGE_EXTRA_MACROS "${PACKAGE_EXTRA_MACROS}\nset(PINOCCHIO_USE_CPPAD \"\")")
 ENDIF()
 IF(BUILD_WITH_CPPAD_CODEGEN_SUPPORT)
+  EXPORT_VARIABLE(PINOCCHIO_USE_CPPAD_CODEGEN ON)
   SET(PACKAGE_EXTRA_MACROS "${PACKAGE_EXTRA_MACROS}\nset(PINOCCHIO_USE_CPPAD_CODEGEN \"\")")
 ENDIF()
 IF(BUILD_WITH_CASADI_SUPPORT)
+  EXPORT_VARIABLE(PINOCCHIO_USE_CASADI ON)
   SET(PACKAGE_EXTRA_MACROS "${PACKAGE_EXTRA_MACROS}\nset(PINOCCHIO_USE_CASADI \"\")")
 ENDIF()
 IF(BUILD_PYTHON_INTERFACE)
+  EXPORT_VARIABLE(PINOCCHIO_WITH_PYTHON_INTERFACE ON)
   SET(PACKAGE_EXTRA_MACROS "${PACKAGE_EXTRA_MACROS}\nset(PINOCCHIO_WITH_PYTHON_INTERFACE \"\")")
 ENDIF()
 
