@@ -1,4 +1,4 @@
-From 493b6843aecb801a907d08316de07bbf7d65473d Mon Sep 17 00:00:00 2001
+From 4f37399712f8d4817acfd313ef5144896176f364 Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Fri, 29 May 2020 22:41:11 +0100
 Subject: [PATCH 2/3] Set CONFIG_INSTALL_DIR to share//cmake
@@ -8,15 +8,15 @@ Subject: [PATCH 2/3] Set CONFIG_INSTALL_DIR to share//cmake
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/cmake/package-config.cmake b/cmake/package-config.cmake
-index 76946e5..951b1c0 100644
+index 434750a..7c43a4e 100644
 --- a/cmake/package-config.cmake
 +++ b/cmake/package-config.cmake
 @@ -34,7 +34,7 @@ MACRO(_SETUP_PROJECT_PACKAGE_INIT)
  #   * <prefix>/lib/cmake/<PROJECT-NAME>
  #   * <prefix>/lib/
  #   * <prefix>/include/
--set(CONFIG_INSTALL_DIR "lib/cmake/${PROJECT_NAME}")
-+set(CONFIG_INSTALL_DIR "share/${PROJECT_NAME}/cmake")
+-set(CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
++set(CONFIG_INSTALL_DIR "${CMAKE_INSTALL_DATAROOTDIR}/cmake/${PROJECT_NAME}")
  set(INCLUDE_INSTALL_DIR "include")
  set(INCLUDE_INSTALL_DESTINATION "${INCLUDE_INSTALL_DIR}/${PROJECT_NAME}")
  
@@ -24,8 +24,8 @@ index 76946e5..951b1c0 100644
  #   * <prefix>/lib/cmake/<PROJECT-NAME>
  #   * <prefix>/lib/
  #   * <prefix>/include/
--set(CONFIG_INSTALL_DIR "lib/cmake/${PROJECT_NAME}")
-+set(CONFIG_INSTALL_DIR "share/${PROJECT_NAME}/cmake")
+-set(CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
++set(CONFIG_INSTALL_DIR "${CMAKE_INSTALL_DATAROOTDIR}/cmake/${PROJECT_NAME}")
  set(INCLUDE_INSTALL_DIR "include")
  set(INCLUDE_INSTALL_DESTINATION "${INCLUDE_INSTALL_DIR}/${PROJECT_NAME}")
  
