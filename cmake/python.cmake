@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2020 LAAS-CNRS, JRL AIST-CNRS, INRIA.
+# Copyright (C) 2008-2021 LAAS-CNRS, JRL AIST-CNRS, INRIA.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -318,10 +318,13 @@ MACRO(DYNAMIC_GRAPH_PYTHON_MODULE SUBMODULENAME LIBRARYNAME TARGETNAME)
 
   FILE(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/src/dynamic_graph/${SUBMODULENAME})
 
+  SET(PYTHON_INSTALL_DIR "${PYTHON_SITELIB}/dynamic_graph/${SUBMODULENAME}")
+  STRING(REGEX REPLACE "[^/]+" ".." PYTHON_INSTALL_DIR_REVERSE ${PYTHON_INSTALL_DIR})
+
   SET_TARGET_PROPERTIES(${PYTHON_MODULE}
     PROPERTIES PREFIX ""
     OUTPUT_NAME dynamic_graph/${SUBMODULENAME}/wrap
-    BUILD_RPATH ${DYNAMIC_GRAPH_PLUGINDIR}
+    BUILD_RPATH "${DYNAMIC_GRAPH_PLUGINDIR}:\$ORIGIN/${PYTHON_INSTALL_DIR_REVERSE}/${DYNAMIC_GRAPH_PLUGINDIR}"
    )
 
   IF (UNIX AND NOT APPLE)
@@ -340,7 +343,6 @@ MACRO(DYNAMIC_GRAPH_PYTHON_MODULE SUBMODULENAME LIBRARYNAME TARGETNAME)
   #
   # Installation
   #
-  SET(PYTHON_INSTALL_DIR ${PYTHON_SITELIB}/dynamic_graph/${SUBMODULENAME})
 
   INSTALL(TARGETS ${PYTHON_MODULE}
     DESTINATION
@@ -437,6 +439,42 @@ MACRO(PYTHON_BUILD MODULE FILE)
     )
 ENDMACRO()
 
+# PYTHON_BUILD_FILE(FILE)
+# --------------------------------------
+#
+# Build a Python a given file.
+#
+MACRO(PYTHON_BUILD_FILE FILE)
+  # Regex from IsValidTargetName in CMake/Source/cmGeneratorExpression.cxx
+  STRING(REGEX REPLACE "[^A-Za-z0-9_.+-]" "_" compile_pyc "compile_pyc_${CMAKE_CURRENT_SOURCE_DIR}")
+  IF(NOT TARGET ${compile_pyc})
+    ADD_CUSTOM_TARGET(${compile_pyc} ALL)
+  ENDIF()
+
+  ADD_CUSTOM_COMMAND(
+    TARGET ${compile_pyc}
+    PRE_BUILD
+    COMMAND
+    "${PYTHON_EXECUTABLE}"
+    -c "import py_compile; py_compile.compile(\"${FILE}\",\"${FILE}c\")"
+    VERBATIM
+  )
+
+  # Tag pyc file as generated.
+  SET_SOURCE_FILES_PROPERTIES(
+    "${FILE}c"
+    PROPERTIES GENERATED TRUE)
+
+  # Clean generated files.
+  SET_PROPERTY(
+    DIRECTORY APPEND PROPERTY
+    ADDITIONAL_MAKE_CLEAN_FILES
+    "${FILE}c"
+    )
+ENDMACRO()
+
+
+
 # PYTHON_INSTALL_BUILD(MODULE FILE DEST)
 # --------------------------------------
 #
@@ -479,24 +517,38 @@ MACRO(PYTHON_INSTALL_BUILD MODULE FILE DEST)
 ENDMACRO()
 
 #.rst:
-# .. command:: FIND_NUMPY
+# .. command:: FIND_NUMPY()
 #
-#   Detect numpy module
+#   Detect numpy module and define the variable NUMPY_INCLUDE_DIRS if it is not already set.
 #
 
 MACRO(FIND_NUMPY)
   # Detect numpy.
   MESSAGE (STATUS "checking for numpy")
   EXECUTE_PROCESS(
-    COMMAND "${PYTHON_EXECUTABLE}" "-c"
-    "import numpy; print (numpy.get_include())"
-    OUTPUT_VARIABLE NUMPY_INCLUDE_DIRS
+    COMMAND "${PYTHON_EXECUTABLE}" "-c" "import numpy; print (True)"
+    OUTPUT_VARIABLE IS_NUMPY
     ERROR_QUIET)
-  IF (NOT NUMPY_INCLUDE_DIRS)
+  IF (NOT IS_NUMPY)
     MESSAGE (FATAL_ERROR "Failed to detect numpy")
   ELSE ()
-    STRING(REGEX REPLACE "\n$" "" NUMPY_INCLUDE_DIRS "${NUMPY_INCLUDE_DIRS}")
-    FILE(TO_CMAKE_PATH "${NUMPY_INCLUDE_DIRS}" NUMPY_INCLUDE_DIRS)
-    MESSAGE (STATUS " NUMPY_INCLUDE_DIRS=${NUMPY_INCLUDE_DIRS}")
+    IF(NOT NUMPY_INCLUDE_DIRS)
+      EXECUTE_PROCESS(
+        COMMAND "${PYTHON_EXECUTABLE}" "-c"
+        "import numpy; print (numpy.get_include())"
+        OUTPUT_VARIABLE NUMPY_INCLUDE_DIRS
+        ERROR_QUIET)
+      STRING(REGEX REPLACE "\n$" "" NUMPY_INCLUDE_DIRS "${NUMPY_INCLUDE_DIRS}")
+      FILE(TO_CMAKE_PATH "${NUMPY_INCLUDE_DIRS}" NUMPY_INCLUDE_DIRS)
+    ENDIF()
+    MESSAGE(STATUS "  NUMPY_INCLUDE_DIRS=${NUMPY_INCLUDE_DIRS}")
+    # Retrive NUMPY_VERSION
+    EXECUTE_PROCESS(
+      COMMAND "${PYTHON_EXECUTABLE}" "-c"
+      "import numpy; print (numpy.__version__)"
+      OUTPUT_VARIABLE NUMPY_VERSION
+      ERROR_QUIET)
+    STRING(REGEX REPLACE "\n$" "" NUMPY_VERSION "${NUMPY_VERSION}")
+    MESSAGE(STATUS "  NUMPY_VERSION=${NUMPY_VERSION}")
   ENDIF()
 ENDMACRO()
