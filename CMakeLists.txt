@@ -18,6 +18,13 @@ SET(CMAKE_VERBOSE_MAKEFILE True)
 SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
 SET(BUILD_TESTING OFF CACHE BOOL "") # Disable unit tests for buildfarm release to avoid memory exhaustion
 
+
+# ----------------------------------------------------
+# --- OPTIONS  ---------------------------------------
+# Need to be set before including base.cmake
+# ----------------------------------------------------
+OPTION(INSTALL_DOCUMENTATION "Generate and install the documentation" OFF)
+
 # Check if the submodule cmake have been initialized
 IF(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/cmake/base.cmake")
   MESSAGE(FATAL_ERROR "\nPlease run the following command first:\ngit submodule update --init\n")
