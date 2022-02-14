@@ -1,3 +1,26 @@
+## pinocchio (noetic) - 2.6.5-1
+
+The packages in the `pinocchio` repository were released into the `noetic` distro by running `/usr/bin/bloom-release -r noetic pinocchio` on `Mon, 14 Feb 2022 14:41:27 -0000`
+
+The `pinocchio` package was released.
+
+Version of package(s) in repository `pinocchio`:
+
+- upstream repository: https://github.com/stack-of-tasks/pinocchio.git
+- release repository: https://github.com/stack-of-tasks/pinocchio-ros-release.git
+- rosdistro version: `2.6.4-1`
+- old version: `2.6.4-1`
+- new version: `2.6.5-1`
+
+Versions of tools used:
+
+- bloom version: `0.10.7`
+- catkin_pkg version: `0.4.24`
+- rosdep version: `0.21.0`
+- rosdistro version: `0.8.3`
+- vcstools version: `0.1.42`
+
+
 ## pinocchio (melodic) - 2.6.4-1
 
 The packages in the `pinocchio` repository were released into the `melodic` distro by running `/usr/bin/bloom-release -r melodic pinocchio` on `Tue, 02 Nov 2021 18:06:50 -0000`
