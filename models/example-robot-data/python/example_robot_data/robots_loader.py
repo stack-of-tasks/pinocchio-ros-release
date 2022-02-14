@@ -50,27 +50,49 @@ class RobotLoader(object):
     path = ''
     urdf_filename = ''
     srdf_filename = ''
+    sdf_filename = ''
     urdf_subpath = 'robots'
     srdf_subpath = 'srdf'
+    sdf_subpath = ''
     ref_posture = 'half_sitting'
     has_rotor_parameters = False
     free_flyer = False
     verbose = False
 
     def __init__(self):
-        urdf_path = join(self.path, self.urdf_subpath, self.urdf_filename)
-        self.model_path = getModelPath(urdf_path, self.verbose)
-        self.urdf_path = join(self.model_path, urdf_path)
-        self.robot = RobotWrapper.BuildFromURDF(self.urdf_path, [join(self.model_path, '../..')],
-                                                pin.JointModelFreeFlyer() if self.free_flyer else None)
+        if self.urdf_filename:
+            if self.sdf_filename:
+                raise AttributeError("Please choose between URDF *or* SDF")
+            df_path = join(self.path, self.urdf_subpath, self.urdf_filename)
+            builder = RobotWrapper.BuildFromURDF
+        else:
+            df_path = join(self.path, self.sdf_subpath, self.sdf_filename)
+            try:
+                builder = RobotWrapper.BuildFromSDF
+            except AttributeError:
+                raise ImportError("Building SDF models require pinocchio >= 3.0.0")
+        self.model_path = getModelPath(df_path, self.verbose)
+        self.df_path = join(self.model_path, df_path)
+        self.robot = builder(self.df_path, [join(self.model_path, '../..')],
+                             pin.JointModelFreeFlyer() if self.free_flyer else None)
 
         if self.srdf_filename:
             self.srdf_path = join(self.model_path, self.path, self.srdf_subpath, self.srdf_filename)
             self.robot.q0 = readParamsFromSrdf(self.robot.model, self.srdf_path, self.verbose,
                                                self.has_rotor_parameters, self.ref_posture)
+
+            if pin.WITH_HPP_FCL and pin.WITH_HPP_FCL_BINDINGS:
+                # Add all collision pairs
+                self.robot.collision_model.addAllCollisionPairs()
+
+                # Remove collision pairs per SRDF
+                pin.removeCollisionPairs(self.robot.model, self.robot.collision_model, self.srdf_path, False)
+
+                # Recreate collision data since the collision pairs changed
+                self.robot.collision_data = self.robot.collision_model.createData()
         else:
             self.srdf_path = None
-            self.robot.q0 = None
+            self.robot.q0 = pin.neutral(self.robot.model)
 
         if self.free_flyer:
             self.addFreeFlyerJointLimits()
@@ -89,6 +111,15 @@ class RobotLoader(object):
         return self.robot.q0
 
 
+class A1Loader(RobotLoader):
+    path = 'a1_description'
+    urdf_filename = "a1.urdf"
+    urdf_subpath = "urdf"
+    srdf_filename = "a1.srdf"
+    ref_posture = "standing"
+    free_flyer = True
+
+
 class ANYmalLoader(RobotLoader):
     path = 'anymal_b_simple_description'
     urdf_filename = "anymal.urdf"
@@ -103,6 +134,12 @@ class ANYmalKinovaLoader(ANYmalLoader):
     ref_posture = "standing_with_arm_up"
 
 
+class BaxterLoader(RobotLoader):
+    path = "baxter_description"
+    urdf_filename = "baxter.urdf"
+    urdf_subpath = "urdf"
+
+
 def loadANYmal(withArm=None):
     if withArm:
         warnings.warn(_depr_msg('loadANYmal(kinova)', 'anymal_kinova'), FutureWarning, 2)
@@ -113,11 +150,21 @@ def loadANYmal(withArm=None):
     return loader().robot
 
 
+class CassieLoader(RobotLoader):
+    path = 'cassie_description'
+    sdf_filename = "cassie_v2.sdf"
+    sdf_subpath = 'robots'
+    srdf_filename = "cassie_v2.srdf"
+    ref_posture = "standing"
+    free_flyer = True
+
+
 class TalosLoader(RobotLoader):
     path = 'talos_data'
     urdf_filename = "talos_reduced.urdf"
     srdf_filename = "talos.srdf"
     free_flyer = True
+    has_rotor_parameters = True
 
 
 class TalosBoxLoader(TalosLoader):
@@ -146,17 +193,11 @@ class TalosLegsLoader(TalosLoader):
         for j, M, name, parent, Y in zip(m1.joints, m1.jointPlacements, m1.names, m1.parents, m1.inertias):
             if j.id < legMaxId:
                 jid = m2.addJoint(parent, getattr(pin, j.shortname())(), M, name)
-                upperPos = m2.upperPositionLimit
-                lowerPos = m2.lowerPositionLimit
-                effort = m2.effortLimit
-                upperPos[m2.joints[jid].idx_q:m2.joints[jid].idx_q + j.nq] = m1.upperPositionLimit[j.idx_q:j.idx_q +
-                                                                                                   j.nq]
-                lowerPos[m2.joints[jid].idx_q:m2.joints[jid].idx_q + j.nq] = m1.lowerPositionLimit[j.idx_q:j.idx_q +
-                                                                                                   j.nq]
-                effort[m2.joints[jid].idx_v:m2.joints[jid].idx_v + j.nv] = m1.effortLimit[j.idx_v:j.idx_v + j.nv]
-                m2.upperPositionLimit = upperPos
-                m2.lowerPositionLimit = lowerPos
-                m2.effortLimit = effort
+                idx_q, idx_v = m2.joints[jid].idx_q, m2.joints[jid].idx_v
+                m2.upperPositionLimit[idx_q:idx_q + j.nq] = m1.upperPositionLimit[j.idx_q:j.idx_q + j.nq]
+                m2.lowerPositionLimit[idx_q:idx_q + j.nq] = m1.lowerPositionLimit[j.idx_q:j.idx_q + j.nq]
+                m2.velocityLimit[idx_v:idx_v + j.nv] = m1.velocityLimit[j.idx_v:j.idx_v + j.nv]
+                m2.effortLimit[idx_v:idx_v + j.nv] = m1.effortLimit[j.idx_v:j.idx_v + j.nv]
                 assert jid == j.id
                 m2.appendBodyToJoint(jid, Y, pin.SE3.Identity())
 
@@ -187,8 +228,8 @@ class TalosLegsLoader(TalosLoader):
         self.robot.visual_data = pin.GeometryData(g2)
 
         # Load SRDF file
-        self.robot.q0 = readParamsFromSrdf(self.robot.model, self.srdf_path, self.verbose,
-                                           self.has_rotor_parameters, self.ref_posture)
+        self.robot.q0 = readParamsFromSrdf(self.robot.model, self.srdf_path, self.verbose, self.has_rotor_parameters,
+                                           self.ref_posture)
 
         assert (m2.armature[:6] == 0.).all()
         # Add the free-flyer joint limits to the new model
@@ -242,7 +283,15 @@ def loadHyQ():
     return HyQLoader().robot
 
 
-class SoloLoader(RobotLoader):
+class BoltLoader(RobotLoader):
+    path = 'bolt_description'
+    urdf_filename = "bolt.urdf"
+    srdf_filename = "bolt.srdf"
+    ref_posture = "standing"
+    free_flyer = True
+
+
+class Solo8Loader(RobotLoader):
     path = 'solo_description'
     urdf_filename = "solo.urdf"
     srdf_filename = "solo.srdf"
@@ -250,14 +299,28 @@ class SoloLoader(RobotLoader):
     free_flyer = True
 
 
-class Solo12Loader(SoloLoader):
+class SoloLoader(Solo8Loader):
+    def __init__(self, *args, **kwargs):
+        warnings.warn('"solo" is deprecated, please try to load "solo8"')
+        return super(SoloLoader, self).__init__(*args, **kwargs)
+
+
+class Solo12Loader(Solo8Loader):
     urdf_filename = "solo12.urdf"
 
 
 def loadSolo(solo=True):
-    warnings.warn(_depr_msg('loadSolo()', 'solo'), FutureWarning, 2)
-    loader = SoloLoader if solo else Solo12Loader
+    warnings.warn(_depr_msg('loadSolo()', 'solo8'), FutureWarning, 2)
+    loader = Solo8Loader if solo else Solo12Loader
     return loader().robot
+
+
+class FingerEduLoader(RobotLoader):
+    path = 'finger_edu_description'
+    urdf_filename = "finger_edu.urdf"
+    srdf_filename = "finger_edu.srdf"
+    ref_posture = "hanging"
+    free_flyer = False
 
 
 class KinovaLoader(RobotLoader):
@@ -275,6 +338,10 @@ def loadKinova():
 class TiagoLoader(RobotLoader):
     path = "tiago_description"
     urdf_filename = "tiago.urdf"
+
+
+class TiagoDualLoader(TiagoLoader):
+    urdf_filename = "tiago_dual.urdf"
 
 
 class TiagoNoHandLoader(TiagoLoader):
@@ -456,8 +523,11 @@ def loadIris():
 
 
 ROBOTS = {
+    'a1': A1Loader,
     'anymal': ANYmalLoader,
     'anymal_kinova': ANYmalKinovaLoader,
+    'baxter': BaxterLoader,
+    'cassie': CassieLoader,
     'double_pendulum': DoublePendulumLoader,
     'hector': HectorLoader,
     'hyq': HyQLoader,
@@ -469,8 +539,11 @@ ROBOTS = {
     'romeo': RomeoLoader,
     'simple_humanoid': SimpleHumanoidLoader,
     'simple_humanoid_classical': SimpleHumanoidClassicalLoader,
+    'bolt': BoltLoader,
     'solo': SoloLoader,
+    'solo8': Solo8Loader,
     'solo12': Solo12Loader,
+    'finger_edu': FingerEduLoader,
     'talos': TalosLoader,
     'talos_box': TalosBoxLoader,
     'talos_arm': TalosArmLoader,
@@ -478,6 +551,7 @@ ROBOTS = {
     'talos_full': TalosFullLoader,
     'talos_full_box': TalosFullBoxLoader,
     'tiago': TiagoLoader,
+    'tiago_dual': TiagoDualLoader,
     'tiago_no_hand': TiagoNoHandLoader,
     'ur3': UR5Loader,
     'ur3_gripper': UR3GripperLoader,
@@ -514,4 +588,4 @@ def load(name, display=False, rootNodeName=''):
 def load_full(name, display=False, rootNodeName=''):
     """Load a robot by its name, optionnaly display it in a viewer, and provide its q0 and paths."""
     inst = loader(name, display, rootNodeName)
-    return inst.robot, inst.robot.q0, inst.urdf_path, inst.srdf_path
+    return inst.robot, inst.robot.q0, inst.df_path, inst.srdf_path

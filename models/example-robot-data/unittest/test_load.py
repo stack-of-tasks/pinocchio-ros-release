@@ -31,11 +31,24 @@ class RobotTestCase(unittest.TestCase):
                 self.assertIn(joint[12].decode(), one_kg_bodies)
         pybullet.disconnect(client_id)
 
+    def test_a1(self):
+        self.check('a1', 19, 18)
+
     def test_anymal(self):
         self.check('anymal', 19, 18)
 
     def test_anymal_kinova(self):
         self.check('anymal_kinova', 25, 24)
+
+    def test_baxter(self):
+        self.check('baxter', 19, 19)
+
+    def test_cassie(self):
+        try:
+            self.check('cassie', 29, 28)
+        except ImportError:
+            import pinocchio
+            self.assertLess(int(pinocchio.__version__.split('.')[0]), 3)
 
     def test_double_pendulum(self):
         self.check('double_pendulum', 2, 2)
@@ -70,11 +83,17 @@ class RobotTestCase(unittest.TestCase):
     def test_simple_humanoid_classical(self):
         self.check('simple_humanoid_classical', 36, 35, one_kg_bodies=['LARM_LINK3', 'RARM_LINK3'])
 
-    def test_solo(self):
-        self.check('solo', 15, 14)
+    def test_bolt(self):
+        self.check('bolt', 13, 12)
+
+    def test_solo8(self):
+        self.check('solo8', 15, 14)
 
     def test_solo12(self):
         self.check('solo12', 19, 18)
+
+    def test_finger_edu(self):
+        self.check('finger_edu', 3, 3)
 
     def test_talos(self):
         self.check('talos', 39, 38)
@@ -97,8 +116,20 @@ class RobotTestCase(unittest.TestCase):
     def test_tiago(self):
         self.check('tiago', 50, 48)
 
+    def test_tiago_dual(self):
+        self.check('tiago_dual', 111, 101)
+
     def test_tiago_no_hand(self):
         self.check('tiago_no_hand', 14, 12)
+
+    def test_ur3(self):
+        self.check('ur3', 6, 6)
+
+    def test_ur3_gripper(self):
+        self.check('ur3_gripper', 6, 6)
+
+    def test_ur3_limited(self):
+        self.check('ur3_limited', 6, 6)
 
     def test_ur5(self):
         self.check('ur5', 6, 6)
@@ -108,6 +139,12 @@ class RobotTestCase(unittest.TestCase):
 
     def test_ur5_limited(self):
         self.check('ur5_limited', 6, 6)
+
+    def test_ur10(self):
+        self.check('ur10', 6, 6)
+
+    def test_ur10_limited(self):
+        self.check('ur10_limited', 6, 6)
 
 
 if __name__ == '__main__':
