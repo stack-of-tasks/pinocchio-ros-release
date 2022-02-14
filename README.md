@@ -23,7 +23,7 @@ Besides, **Pinocchio** provides the analytical derivatives of the main Rigid-Bod
 **Pinocchio** is first tailored for robotics applications, but it can be used in extra contexts (biomechanics, computer graphics, vision, etc.).
 It is built upon Eigen for linear algebra and FCL for collision detection. **Pinocchio** comes with a Python interface for fast code prototyping, [directly accessible](https://github.com/conda-forge/pinocchio-feedstock#installing-pinocchio) through [Conda](https://docs.conda.io/en/latest/).
 
-**Pinocchio** is now at the heart of various robotics softwares as [Crocoddyl](https://github.com/loco-3d/crocoddyl/tree/devel), an open-source and efficient Differential Dynamic Programming solver for robotics, the [Stack-of-Tasks](http://stack-of-tasks.github.io), an open-source and versatile hierarchical controller framework or the [Humanoid Path Planner](https://humanoid-path-planner.github.io/hpp-doc), an open-source software for Motion and Manipulation Planning.
+**Pinocchio** is now at the heart of various robotics software as [Crocoddyl](https://github.com/loco-3d/crocoddyl/tree/devel), an open-source and efficient Differential Dynamic Programming solver for robotics, the [Stack-of-Tasks](http://stack-of-tasks.github.io), an open-source and versatile hierarchical controller framework or the [Humanoid Path Planner](https://humanoid-path-planner.github.io/hpp-doc), an open-source software for Motion and Manipulation Planning.
 
 If you want to learn more on **Pinocchio** internal behaviors and main features, we invite you to read the related [paper](https://hal-laas.archives-ouvertes.fr/hal-01866228).
 
@@ -115,14 +115,13 @@ The online **Pinocchio** documentation of the last release is available [here](h
 
 ## Examples
 
-We provide some basic examples on how to use **Pinocchio** in Python in the [examples/python](./examples/python) directory.
+We provide some basic examples on how to use **Pinocchio** in Python in the [examples](./examples) directory.
 Additional examples introducing **Pinocchio** are also available in the [documentation](https://gepettoweb.laas.fr/doc/stack-of-tasks/pinocchio/master/doxygen-html/md_doc_d-practical-exercises_intro.html).
 
 ## Tutorials
 
 **Pinocchio** comes with a large bunch of tutorials aiming at introducing the basic tools for robot control.
-The content of the tutorials is described [here](https://gepettoweb.laas.fr/doc/stack-of-tasks/pinocchio/master/doxygen-html/md_doc_d-practical-exercises_1-directgeom.html).
-Additionnal materials were presented during the [Memmo](https://www.memmo-project.eu/) summer school and available [here](https://memory-of-motion.github.io/summer-school/materials).
+Tutorial and training documents are listed [here](https://gepettoweb.laas.fr/doc/stack-of-tasks/pinocchio/master/doxygen-html/index.html#OverviewConclu).
 
 ## Visualization
 
@@ -168,7 +167,7 @@ The algorithms for the analytical derivatives of rigid-body dynamics algorithms 
 
 ## Questions and Issues
 
-You have a question or an issue? You may either directly open a [new issue](https://github.com/stack-of-tasks/pinocchio/issues) or use the mailing list <pinocchio@laas.fr>.
+You have a question or an issue? You may either directly open a [new issue](https://github.com/stack-of-tasks/pinocchio/issues) or use the mailing list <pinocchio@inria.fr>.
 
 ## Credits
 
@@ -177,10 +176,10 @@ The following people have been involved in the development of **Pinocchio** and 
 -   [Justin Carpentier](https://jcarpent.github.io) (Inria): main developer and manager of the project
 -   [Nicolas Mansard](http://projects.laas.fr/gepetto/index.php/Members/NicolasMansard) (LAAS-CNRS): initial project instructor
 -   [Guilhem Saurel](http://projects.laas.fr/gepetto/index.php/Members/GuilhemSaurel) (LAAS-CNRS): continuous integration and deployment
--   [Joseph Mirabel](http://jmirabel.github.io/) (LAAS-CNRS): Lie groups support
+-   [Joseph Mirabel](http://jmirabel.github.io/) (Eureka Robotics): Lie groups and hpp-fcl implementation
 -   [Antonio El Khoury](https://www.linkedin.com/in/antonioelkhoury) (Wandercraft): bug fixes
 -   [Gabriele Buondono](http://projects.laas.fr/gepetto/index.php/Members/GabrieleBuondonno) (LAAS-CNRS): features extension, bug fixes and Python bindings
--   [Florian Valenza](https://fr.linkedin.com/in/florian-valenza-1b274082) (Astek): core developments and FCL support
+-   [Florian Valenza](https://fr.linkedin.com/in/florian-valenza-1b274082) (Astek): core developments and hpp-fcl support
 -   [Wolfgang Merkt](http://www.wolfgangmerkt.com/) (University of Edinburgh): ROS integration and support
 -   [Rohan Budhiraja](https://scholar.google.com/citations?user=NW9Io9AAAAAJ) (LAAS-CNRS): features extension
 -   [Loïc Estève](https://github.com/lesteve) (Inria): Conda integration and support
@@ -191,8 +190,19 @@ The following people have been involved in the development of **Pinocchio** and 
 -   [Aamr El Kazdadi](https://github.com/aelkazdadi) (Inria): multiprecision arithmetic support
 -   [Nicolas Torres Alberto](https://scholar.google.com/citations?user=gYNLhEIAAAAJ&hl=en) (Inria): features extension
 -   [Etienne Arlaud](https://github.com/EtienneAr) (Inria): RViz viewer support
+-   [Wilson Jallet](https://github.com/ManifoldFR) (LAAS-CNRS/Inria): extension of Python bindings
 
 If you have taken part to the development of **Pinocchio**, feel free to add your name and contribution in this list.
+
+## Open-source projects relying on Pinocchio
+
+ * [Crocoddyl](https://github.com/loco-3d/crocoddyl) A software to realize model predictive control for complex robotics platform.
+ * [TSID](https://github.com/stack-of-tasks/tsid/) A software which implements an Task Space Inverse Dynamics QP.
+ * [HPP](https://humanoid-path-planner.github.io/hpp-doc/ ) A SDK which implements motion planner for humanoids and other robots.
+ * [Jiminy](https://github.com/duburcqa/jiminy) A simulator based on Pinocchio.
+ * [ocs2](https://github.com/leggedrobotics/ocs2) A toolbox for Optimal Control for Switched Systems (OCS2)
+ * [TriFingerSimulation](https://github.com/open-dynamic-robot-initiative/trifinger_simulation) TriFinger Robot Simulation (a Robot to perform RL on manipulation).
+ * [Casadi_Kin_Dyn](https://github.com/ADVRHumanoids/casadi_kin_dyn) IIT Package for generation of symbolic (SX) expressions of robot kinematics and dynamics. 
 
 ## Acknowledgments
 
