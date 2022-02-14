@@ -15,9 +15,6 @@ SET(PROJECT_USE_KEYWORD_LINK_LIBRARIES TRUE)
 # Disable -Werror on Unix for now.
 SET(CXX_DISABLE_WERROR True)
 SET(CMAKE_VERBOSE_MAKEFILE True)
-SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
-SET(BUILD_TESTING OFF CACHE BOOL "" FORCE) # Disable unit tests for buildfarm release to avoid memory exhaustion
-
 
 # ----------------------------------------------------
 # --- OPTIONS  ---------------------------------------
