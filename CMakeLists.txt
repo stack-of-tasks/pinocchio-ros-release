@@ -18,6 +18,13 @@ SET(CMAKE_VERBOSE_MAKEFILE True)
 SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
 SET(BUILD_TESTING OFF CACHE BOOL "") # Disable unit tests for buildfarm release to avoid memory exhaustion
 
+# Set clang as compiler
+if(NOT CMAKE_CXX_COMPILER)
+  set(CMAKE_CXX_COMPILER clang++)
+endif()
+if(NOT CMAKE_C_COMPILER)
+  set(CMAKE_C_COMPILER clang)
+endif()
 
 # ----------------------------------------------------
 # --- OPTIONS  ---------------------------------------
