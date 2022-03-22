@@ -15,9 +15,6 @@ SET(PROJECT_USE_KEYWORD_LINK_LIBRARIES TRUE)
 # Disable -Werror on Unix for now.
 SET(CXX_DISABLE_WERROR True)
 SET(CMAKE_VERBOSE_MAKEFILE True)
-SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
-SET(BUILD_TESTING OFF CACHE BOOL "") # Disable unit tests for buildfarm release to avoid memory exhaustion
-
 
 # ----------------------------------------------------
 # --- OPTIONS  ---------------------------------------
@@ -335,3 +332,6 @@ ENDFOREACH(cflags ${CFLAGS_DEPENDENCIES})
 
 # Install catkin package.xml
 INSTALL(FILES package.xml DESTINATION share/${PROJECT_NAME})
+# Allows Colcon to find non-Ament packages when using workspace underlays
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/share/ament_index/resource_index/packages/${PROJECT_NAME} "")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/share/ament_index/resource_index/packages/${PROJECT_NAME} DESTINATION share/ament_index/resource_index/packages)
