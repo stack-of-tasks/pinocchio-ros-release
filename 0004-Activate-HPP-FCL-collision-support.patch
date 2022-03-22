@@ -1,0 +1,25 @@
+From 95311672970073437c362d066391305ddc793f6a Mon Sep 17 00:00:00 2001
+From: Wolfgang Merkt <w.merkt@gmail.com>
+Date: Tue, 22 Mar 2022 16:58:33 +0000
+Subject: [PATCH 4/4] Activate HPP-FCL collision support
+
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 36e6c40..94ea386 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -79,7 +79,7 @@ OPTION(BUILD_ADVANCED_TESTING "Build the advanced tests (multiprecision, etc.) o
+ 
+ # --- OPTIONAL DEPENDENCIES -------------------------
+ OPTION(BUILD_WITH_URDF_SUPPORT "Build the library with the URDF format support" ON)
+-OPTION(BUILD_WITH_COLLISION_SUPPORT "Build the library with the collision support (required HPP-FCL)" OFF)
++OPTION(BUILD_WITH_COLLISION_SUPPORT "Build the library with the collision support (required HPP-FCL)" ON)
+ OPTION(BUILD_WITH_AUTODIFF_SUPPORT "Build the library with the automatic differentiation support (via CppAD)" OFF)
+ OPTION(BUILD_WITH_CASADI_SUPPORT "Build the library with the support of CASADI" OFF)
+ OPTION(BUILD_WITH_CODEGEN_SUPPORT "Build the library with the support of code generation (via CppADCodeGen)" OFF)
+-- 
+2.25.1
+

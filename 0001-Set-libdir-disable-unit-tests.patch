@@ -1,14 +1,14 @@
-From df8f649b31f29ada4052b2f9ecd62827862b7633 Mon Sep 17 00:00:00 2001
+From d2e9bca4edd7a2a07c129b26aeb0ce2ba09add46 Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Sat, 11 Apr 2020 12:05:36 +0100
-Subject: [PATCH 1/2] Set libdir, disable unit tests
+Subject: [PATCH 1/4] Set libdir, disable unit tests
 
 ---
  CMakeLists.txt | 3 +++
  1 file changed, 3 insertions(+)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 6889365..4a01dfd 100644
+index fa99555..f85c096 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -15,6 +15,9 @@ SET(PROJECT_USE_KEYWORD_LINK_LIBRARIES TRUE)
