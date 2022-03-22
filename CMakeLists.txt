@@ -15,16 +15,6 @@ SET(PROJECT_USE_KEYWORD_LINK_LIBRARIES TRUE)
 # Disable -Werror on Unix for now.
 SET(CXX_DISABLE_WERROR True)
 SET(CMAKE_VERBOSE_MAKEFILE True)
-SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
-SET(BUILD_TESTING OFF CACHE BOOL "") # Disable unit tests for buildfarm release to avoid memory exhaustion
-
-# Set clang as compiler
-if(NOT CMAKE_CXX_COMPILER)
-  set(CMAKE_CXX_COMPILER clang++)
-endif()
-if(NOT CMAKE_C_COMPILER)
-  set(CMAKE_C_COMPILER clang)
-endif()
 
 # ----------------------------------------------------
 # --- OPTIONS  ---------------------------------------
@@ -79,7 +69,7 @@ OPTION(BUILD_ADVANCED_TESTING "Build the advanced tests (multiprecision, etc.) o
 
 # --- OPTIONAL DEPENDENCIES -------------------------
 OPTION(BUILD_WITH_URDF_SUPPORT "Build the library with the URDF format support" ON)
-OPTION(BUILD_WITH_COLLISION_SUPPORT "Build the library with the collision support (required HPP-FCL)" ON)
+OPTION(BUILD_WITH_COLLISION_SUPPORT "Build the library with the collision support (required HPP-FCL)" OFF)
 OPTION(BUILD_WITH_AUTODIFF_SUPPORT "Build the library with the automatic differentiation support (via CppAD)" OFF)
 OPTION(BUILD_WITH_CASADI_SUPPORT "Build the library with the support of CASADI" OFF)
 OPTION(BUILD_WITH_CODEGEN_SUPPORT "Build the library with the support of code generation (via CppADCodeGen)" OFF)
