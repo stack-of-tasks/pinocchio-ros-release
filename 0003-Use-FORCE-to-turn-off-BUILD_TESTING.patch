@@ -1,14 +1,14 @@
-From 5df05eaf815dd1b72f6fba9c95a0f6222eed3d9a Mon Sep 17 00:00:00 2001
+From 0ed6e6da99c79b9964328b1e299b52ebba964948 Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Sun, 6 Sep 2020 15:42:36 +0100
-Subject: [PATCH 3/3] Use FORCE to turn off BUILD_TESTING
+Subject: [PATCH 3/5] Use FORCE to turn off BUILD_TESTING
 
 ---
  CMakeLists.txt | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 4a01dfd..b001e6e 100644
+index f85c096..abae97f 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -16,7 +16,7 @@ SET(PROJECT_USE_KEYWORD_LINK_LIBRARIES TRUE)

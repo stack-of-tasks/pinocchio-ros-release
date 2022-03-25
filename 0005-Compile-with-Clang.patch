@@ -1,0 +1,30 @@
+From 5782b6882798bf21de3cdca8d057f372a39395ca Mon Sep 17 00:00:00 2001
+From: Wolfgang Merkt <w.merkt@gmail.com>
+Date: Fri, 25 Mar 2022 12:30:29 +0000
+Subject: [PATCH 5/5] Compile with Clang
+
+---
+ CMakeLists.txt | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f815b06..14f7fc5 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -18,6 +18,13 @@ SET(CMAKE_VERBOSE_MAKEFILE True)
+ SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
+ SET(BUILD_TESTING OFF CACHE BOOL "" FORCE) # Disable unit tests for buildfarm release to avoid memory exhaustion
+ 
++# Set clang as compiler
++if(NOT CMAKE_CXX_COMPILER)
++  set(CMAKE_CXX_COMPILER clang++)
++endif()
++if(NOT CMAKE_C_COMPILER)
++  set(CMAKE_C_COMPILER clang)
++endif()
+ 
+ # ----------------------------------------------------
+ # --- OPTIONS  ---------------------------------------
+-- 
+2.25.1
+
