@@ -1,4 +1,4 @@
-From 30296e50a1ed3afb10aaff1e98e2abb0caa89ffb Mon Sep 17 00:00:00 2001
+From 7d3eb9187aa56ef8451b74b64b267bac2a8091ae Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Tue, 22 Mar 2022 16:58:00 +0000
 Subject: [PATCH 3/4] Compile with Clang
