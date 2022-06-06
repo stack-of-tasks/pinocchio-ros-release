@@ -15,16 +15,6 @@ SET(PROJECT_USE_KEYWORD_LINK_LIBRARIES TRUE)
 # Disable -Werror on Unix for now.
 SET(CXX_DISABLE_WERROR True)
 SET(CMAKE_VERBOSE_MAKEFILE True)
-SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
-SET(BUILD_TESTING OFF CACHE BOOL "" FORCE) # Disable unit tests for buildfarm release to avoid memory exhaustion
-
-# Set clang as compiler
-if(NOT CMAKE_CXX_COMPILER)
-  set(CMAKE_CXX_COMPILER clang++)
-endif()
-if(NOT CMAKE_C_COMPILER)
-  set(CMAKE_C_COMPILER clang)
-endif()
 
 # ----------------------------------------------------
 # --- OPTIONS  ---------------------------------------
@@ -55,6 +45,9 @@ INCLUDE(CMakeDependentOption)
 
 # If needed, set CMake policy for APPLE systems
 APPLY_DEFAULT_APPLE_CONFIGURATION()
+IF(CMAKE_VERSION VERSION_GREATER "3.12")
+  CMAKE_POLICY(SET CMP0074 NEW)
+ENDIF()
 
 IF(WIN32)
   SET(LINK copy_if_different)
@@ -79,12 +72,12 @@ OPTION(BUILD_ADVANCED_TESTING "Build the advanced tests (multiprecision, etc.) o
 
 # --- OPTIONAL DEPENDENCIES -------------------------
 OPTION(BUILD_WITH_URDF_SUPPORT "Build the library with the URDF format support" ON)
-OPTION(BUILD_WITH_COLLISION_SUPPORT "Build the library with the collision support (required HPP-FCL)" ON)
+OPTION(BUILD_WITH_COLLISION_SUPPORT "Build the library with the collision support (required HPP-FCL)" OFF)
 OPTION(BUILD_WITH_AUTODIFF_SUPPORT "Build the library with the automatic differentiation support (via CppAD)" OFF)
 OPTION(BUILD_WITH_CASADI_SUPPORT "Build the library with the support of CASADI" OFF)
 OPTION(BUILD_WITH_CODEGEN_SUPPORT "Build the library with the support of code generation (via CppADCodeGen)" OFF)
 OPTION(BUILD_WITH_OPENMP_SUPPORT "Build the library with the OpenMP support" OFF)
-cmake_dependent_option(LINK_PYTHON_INTERFACE_TO_OPENM "Link OpenMP to the Python interface" ON BUILD_WITH_OPENMP_SUPPORT OFF)
+cmake_dependent_option(LINK_PYTHON_INTERFACE_TO_OPENMP "Link OpenMP to the Python interface" ON BUILD_WITH_OPENMP_SUPPORT OFF)
 
 OPTION(INITIALIZE_WITH_NAN "Initialize Eigen entries with NaN" OFF)
 
