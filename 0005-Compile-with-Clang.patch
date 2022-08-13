@@ -1,4 +1,4 @@
-From 9fcc76a5366053339ffe3108fdd9f85bb75fc407 Mon Sep 17 00:00:00 2001
+From 2c447b06a37dda8fe1e7f13e06314967c0cc05d4 Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Fri, 25 Mar 2022 12:30:29 +0000
 Subject: [PATCH 5/5] Compile with Clang
@@ -8,7 +8,7 @@ Subject: [PATCH 5/5] Compile with Clang
  1 file changed, 7 insertions(+)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index f815b06..14f7fc5 100644
+index f659347..e14305b 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -18,6 +18,13 @@ SET(CMAKE_VERBOSE_MAKEFILE True)
