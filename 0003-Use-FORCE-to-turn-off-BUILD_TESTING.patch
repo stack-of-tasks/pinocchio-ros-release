@@ -1,4 +1,4 @@
-From 6e14adb9de5950c0a6f28b6bf038ea59ce62bc87 Mon Sep 17 00:00:00 2001
+From de88c2ce06d5427ec609a0762d0443595caae85d Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Sun, 6 Sep 2020 15:42:36 +0100
 Subject: [PATCH 3/5] Use FORCE to turn off BUILD_TESTING
