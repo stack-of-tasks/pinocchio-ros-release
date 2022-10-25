@@ -1,4 +1,4 @@
-From 439a23d6e7a02617e1b79a2546df6224c89d02ec Mon Sep 17 00:00:00 2001
+From e7f19559f3e033b0b4aa6daf2d18b09431eee69c Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Thu, 18 Aug 2022 18:03:34 +0100
 Subject: [PATCH] Patch: Set PYTHON_EXECUTABLE for Buster
