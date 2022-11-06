@@ -18,11 +18,6 @@ SET(CMAKE_VERBOSE_MAKEFILE True)
 SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
 SET(BUILD_TESTING OFF CACHE BOOL "") # Disable unit tests for buildfarm release to avoid memory exhaustion
 
-# Fix for Debian Buster
-if(NOT DEFINED PYTHON_EXECUTABLE)
-  set(PYTHON_EXECUTABLE "/usr/bin/python3")
-endif()
-
 # Set clang as compiler
 if(NOT CMAKE_CXX_COMPILER)
   set(CMAKE_CXX_COMPILER clang++)
@@ -184,7 +179,8 @@ IF(BUILD_PYTHON_INTERFACE)
 
     MESSAGE(STATUS "Python compiler: ${_python_implementation_value}")
     IF(_python_implementation_value MATCHES "PyPy" )
-      MESSAGE(FATAL_ERROR "PyPy detected, therefore libpython is not available. Please set BUILD_WITH_LIBPYTHON to OFF.")
+      SET(BUILD_WITH_LIBPYTHON OFF)
+      MESSAGE(STATUS "PyPy detected, therefore libpython is not available and BUILD_WITH_LIBPYTHON set to OFF.")
     ENDIF()
   ENDIF()
 ELSE(BUILD_PYTHON_INTERFACE)
