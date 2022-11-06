@@ -1,4 +1,4 @@
-From 8c3305825882a43b7609e3713e8932fecb061727 Mon Sep 17 00:00:00 2001
+From b8974ba9019dcd5932cac524954541c9cb5a1ba6 Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Fri, 25 Mar 2022 12:29:38 +0000
 Subject: [PATCH 4/5] Activate HPP-FCL collision support
