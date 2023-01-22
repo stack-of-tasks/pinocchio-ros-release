@@ -1,4 +1,4 @@
-From cd65364c912314d7796a7b32c461dc047c1f25ca Mon Sep 17 00:00:00 2001
+From 003f64103956442d786a1e98fe0c1aae53439f8f Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Tue, 22 Mar 2022 16:58:33 +0000
 Subject: [PATCH 4/4] Activate HPP-FCL collision support
@@ -8,7 +8,7 @@ Subject: [PATCH 4/4] Activate HPP-FCL collision support
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 294b5f2..d375a4f 100644
+index 413bc73..a381e49 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -81,7 +81,7 @@ OPTION(BUILD_ADVANCED_TESTING "Build the advanced tests (multiprecision, etc.) o
