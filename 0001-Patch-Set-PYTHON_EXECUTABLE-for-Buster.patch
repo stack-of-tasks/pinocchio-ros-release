@@ -1,4 +1,4 @@
-From b8c998dc7ceb79b37499ecd4c1f67a2480865b97 Mon Sep 17 00:00:00 2001
+From 41e068aeb57e3bfc06b479ca0bafd373a5d7d6e5 Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Thu, 18 Aug 2022 18:03:34 +0100
 Subject: [PATCH] Patch: Set PYTHON_EXECUTABLE for Buster
@@ -8,7 +8,7 @@ Subject: [PATCH] Patch: Set PYTHON_EXECUTABLE for Buster
  1 file changed, 5 insertions(+)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index d375a4f..1dab1ac 100644
+index a381e49..327c977 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -18,6 +18,11 @@ SET(CMAKE_VERBOSE_MAKEFILE True)
