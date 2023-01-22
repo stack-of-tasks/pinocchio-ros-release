@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2021 CNRS INRIA
+# Copyright (c) 2015-2023 CNRS INRIA
 # Copyright (c) 2015 Wandercraft, 86 rue de Paris 91400 Orsay, France.
 #
 
@@ -17,11 +17,6 @@ SET(CXX_DISABLE_WERROR True)
 SET(CMAKE_VERBOSE_MAKEFILE True)
 SET(CMAKE_INSTALL_LIBDIR "lib") # Kinetic lib prefix work-around
 SET(BUILD_TESTING OFF CACHE BOOL "") # Disable unit tests for buildfarm release to avoid memory exhaustion
-
-# Fix for Debian Buster
-if(NOT DEFINED PYTHON_EXECUTABLE)
-  set(PYTHON_EXECUTABLE "/usr/bin/python3")
-endif()
 
 # Set clang as compiler
 if(NOT CMAKE_CXX_COMPILER)
