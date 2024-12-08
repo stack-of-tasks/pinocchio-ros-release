@@ -1,4 +1,4 @@
-From dd11e41c9025e9d908ea2c77efb208b89822d17f Mon Sep 17 00:00:00 2001
+From cadd7afeec3ccf12964159c2c1f78da896fee4c2 Mon Sep 17 00:00:00 2001
 From: Wolfgang Merkt <w.merkt@gmail.com>
 Date: Fri, 29 May 2020 22:41:42 +0100
 Subject: [PATCH 2/4] Set CONFIG_INSTALL_DIR to share//cmake
@@ -30,5 +30,5 @@ index d7134c1..e225ee3 100644
    set(INCLUDE_INSTALL_DESTINATION "${INCLUDE_INSTALL_DIR}/${PROJECT_NAME}")
  
 -- 
-2.43.0
+2.47.0
 
